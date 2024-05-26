@@ -1,0 +1,10 @@
+Dit bestand bevat de metingen die bij het zwembad waren gemaakt.
+
+cm | hoeveel pakkettten correct aankwamen
+60: 0
+20: 50
+40: 0
+30: 50
+35: 50
+40: 0
+36: 0
