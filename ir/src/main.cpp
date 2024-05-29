@@ -29,8 +29,8 @@ void setup() {
     
 
     // receivier objects
-    receiver = new sen::IrReceiver( 26 );
-    decoder = new sen::MessageDecoder( *receiver );
+    receiver = new sen::IrReceiver( 26, 500 );
+    decoder = new sen::MessageDecoder( *receiver, 500 );
     listener = new PrintListener;
     decoder->setMessageListener( listener );
     // receiver task

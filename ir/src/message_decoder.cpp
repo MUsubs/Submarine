@@ -2,7 +2,13 @@
 
 namespace sen {
 
-MessageDecoder::MessageDecoder( IrReceiver & ir ) {
+const float IMPRECISION_FACTOR = .1;
+const float MAX_FACTOR = (1+IMPRECISION_FACTOR);
+const float MIN_FACTOR = (1-IMPRECISION_FACTOR);
+
+MessageDecoder::MessageDecoder( IrReceiver & ir, int definition_us ) :
+    _definition_us( _definition_us )
+{
     ir.setIrListener( this );
 }
 
@@ -11,31 +17,21 @@ void MessageDecoder::signalDetected( uint32_t us ) {
     // if currently waiting for a lead signal
     if ( _state == wait_for_lead_signal ) {
         // and the signal is the correct length for a lead signal
-        if ( us > constants::LEADSIGNAL_MIN_US && us < constants::LEADSIGNAL_MAX_US ) {
+        if ( us > _definition_us * MIN_FACTOR && us < _definition_us * MAX_FACTOR ) {
             // wait for a lead pause
-            _state = wait_for_lead_pause;
+            _state = wait_for_bit_pause;
         }
     }
 }
 
 
 void MessageDecoder::pauseDetected( uint32_t us ) {
-    // if currently waiting for a lead pause
-    if ( _state == wait_for_lead_pause ) {
-        // if the pause is the correct length for a lead pause, proceed to wait for bit pause
-        // otherwise, go back to waiting for a lead signal
-        if ( us > constants::LEADPAUSE_MIN_US && us < constants::LEADPAUSE_MAX_US ) {
-            _message = 0;
-            _state = wait_for_bit_pause;
-        } else {
-            _state = wait_for_lead_signal;
-        }
     // if currently waiting for a bit pause
-    } else if ( _state == wait_for_bit_pause ) {
+    if ( _state == wait_for_bit_pause ) {
         // if the pause is correct length for a bit pause
-        if ( us > constants::BITPAUSE_MIN_US && us < constants::BITPAUSE_MAX_US ) {
+        if ( us > _definition_us*MIN_FACTOR && us < _definition_us*2*MAX_FACTOR ) {
             // depending on pause length, append a one or zero to the message
-            if ( us > constants::BITPAUSE_THRESHOLD_ZERO_ONE ) {
+            if ( us < (_definition_us+_definition_us*2)/2 ) {
                 _message <<= 1;
                 _message |= 1;
             } else {
