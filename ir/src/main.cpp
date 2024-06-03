@@ -17,7 +17,7 @@ public:
 sen::IrReceiver * receiver;
 sen::MessageDecoder * decoder;
 sen::MessageListener * listener;
-// sen::SendIrControl * sender;
+sen::SendIrControl * sender;
 
 void setup() {
     // disable watchdog
@@ -29,8 +29,8 @@ void setup() {
     
 
     // receivier objects
-    receiver = new sen::IrReceiver( 26, 500 );
-    decoder = new sen::MessageDecoder( *receiver, 500 );
+    receiver = new sen::IrReceiver( 26, 50 );
+    decoder = new sen::MessageDecoder( *receiver, 1000 );
     listener = new PrintListener;
     decoder->setMessageListener( listener );
     // receiver task
@@ -43,28 +43,29 @@ void setup() {
         NULL
     );
 
-    // // sender object
-    // sender = new sen::SendIrControl( 25, 16 );
-    // // sender task
-    // xTaskCreate(
-    //     []( void* ){ sender->main(); },
-    //     "ir sender",
-    //     2048,
-    //     NULL,
-    //     1,
-    //     NULL
-    // );
+    // sender object
+    sender = new sen::SendIrControl( 25, 1000, 16 );
+    // sender task
+    xTaskCreate(
+        []( void* ){ sender->main(); },
+        "ir sender",
+        2048,
+        NULL,
+        1,
+        NULL
+    );
 
-    // set random seed for random()
-    randomSeed(2);
-    for ( int i=0; i<50; i++ )
-        values.insert( random() );
+    // // set random seed for random()
+    // randomSeed(2);
+    // for ( int i=0; i<50; i++ )
+    //     values.insert( random() );
 }
 
 void loop() { 
     // int msg = random();
     // Serial.printf("sending:\t%08x\n", msg);
-    // sender->sendMessage( msg );s
-    delay( 1000 );
-    Serial.printf("Thingies left:\t%i\n", values.size());
+    // sender->sendMessage( msg );
+    sender->sendMessage( 0x5555fafa );
+    delay( 2000 );
+    // Serial.printf("Thingies left:\t%i\n", values.size());
 }
