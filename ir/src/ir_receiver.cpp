@@ -1,14 +1,17 @@
 #include "ir_receiver.hpp"
 
+#include <Arduino.h>
+#include <FreeRTOS.h>
+
 namespace sen {
 
-const int MAX_PAUSE_US = 100000;
+const int MAX_PAUSE_US = 10000;
 
 IrReceiver::IrReceiver( int pin, int definition_us ):
     _pin( pin ),
     _definition_us( definition_us )
 {
-    pinMode( _pin, INPUT );
+    pinMode( _pin, INPUT_PULLDOWN );
 }
 
 void IrReceiver::setIrListener( IrListener * ir_listener ) {
@@ -23,9 +26,9 @@ void IrReceiver::main( ) {
         // if waiting for a pause (so currently receiving signal)
         case wait_for_pause:
             // wait _definition_us us
-            wait_start = esp_timer_get_time();
-            while ( esp_timer_get_time() < wait_start+_definition_us )
-                vPortYield();
+            wait_start = time_us_64();
+            while ( time_us_64() < wait_start+_definition_us )
+                yield();
             // if signal still is
             if ( !digitalRead( _pin ) ) {
                 // keep track of signal length
@@ -41,9 +44,9 @@ void IrReceiver::main( ) {
         // if waiting for a signal (so currently no signal / a pause)
         case wait_for_signal:
             // wait _definition_us us
-            wait_start = esp_timer_get_time();
-            while ( esp_timer_get_time() < wait_start+_definition_us )
-                vPortYield();
+            wait_start = time_us_64();
+            while ( time_us_64() < wait_start+_definition_us )
+                yield();
             // if still no signal
             if ( digitalRead( _pin ) ) {
                 // keep track of pause length

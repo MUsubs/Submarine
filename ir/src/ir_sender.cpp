@@ -1,21 +1,26 @@
 #include "ir_sender.hpp"
 
+#include <Arduino.h>
+#include <FreeRTOS.h>
+
 namespace sen {
 
 IrSender::IrSender( int pin ) :
     _pin( pin )
 {
-    pinMode( _pin, OUTPUT | ANALOG );
-    analogWriteFrequency( 38000 );
+
+    pinMode( _pin, OUTPUT );
+    analogWriteFreq( 38000 );
+    analogWriteRange( 256 );
 }
 
 void IrSender::sendSignal( Signal signal ) {
     // set pin on or off, depending on signal object
     analogWrite( _pin, signal.on ? 127 : 0 ); 
     // wait signal.us microseconds
-    int64_t wait_start = esp_timer_get_time();
-    while ( esp_timer_get_time() < wait_start+signal.us )
-        vPortYield();
+    int64_t wait_start = time_us_64();
+    while ( time_us_64() < wait_start+signal.us )
+        yield();
     // turn pin off
     analogWrite( _pin, 0 );
 }

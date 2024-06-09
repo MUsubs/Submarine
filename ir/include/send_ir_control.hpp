@@ -3,6 +3,9 @@
 
 #include "ir_sender.hpp"
 
+#include <FreeRTOS.h>
+#include <queue.h>
+
 namespace sen {
 
 class SendIrControl {

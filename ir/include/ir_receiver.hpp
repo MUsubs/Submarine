@@ -1,7 +1,7 @@
 #ifndef R2D2_IR_RECEIVER_HPP
 #define R2D2_IR_RECEIVER_HPP
 
-#include "Arduino.h"
+#include <cstdint>
 
 namespace sen {
 

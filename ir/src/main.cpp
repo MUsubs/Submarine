@@ -2,15 +2,19 @@
 #include "message_decoder.hpp"
 #include "send_ir_control.hpp"
 
-#include <unordered_set>
+#include <FreeRTOS.h>
+#include <semphr.h>
+#include <task.h>
+#include <Arduino.h>
 
-std::unordered_set<int> values;
+// #include <unordered_set>
+// std::unordered_set<int> values;
 
 class PrintListener : public sen::MessageListener {
 public:
     void messageReceived( uint32_t msg ) override {
-        Serial.printf( "received:\t%08x\n", msg );
-        values.erase( msg );
+        Serial.print( "received:\t" + String(msg, 2) + "\n" );
+        // values.erase( msg );
     }
 };
 
@@ -20,31 +24,25 @@ sen::MessageListener * listener;
 sen::SendIrControl * sender;
 
 void setup() {
-    // disable watchdog
-    disableCore0WDT();
-    disableCore1WDT();
-
     // serial monitor init
     Serial.begin( 57600 );
-    
-
     // receivier objects
-    receiver = new sen::IrReceiver( 26, 50 );
-    decoder = new sen::MessageDecoder( *receiver, 1000 );
+    receiver = new sen::IrReceiver( 26, 100 );
+    decoder = new sen::MessageDecoder( *receiver, 2500 );
     listener = new PrintListener;
     decoder->setMessageListener( listener );
     // receiver task
     xTaskCreate(
         []( void* ){ receiver->main(); },
         "ir receiver",
-        2048,
+        4096,
         NULL,
         1,
         NULL
     );
 
     // sender object
-    sender = new sen::SendIrControl( 25, 1000, 16 );
+    sender = new sen::SendIrControl( 22, 2500, 16 );
     // sender task
     xTaskCreate(
         []( void* ){ sender->main(); },
@@ -56,16 +54,15 @@ void setup() {
     );
 
     // // set random seed for random()
-    // randomSeed(2);
+    randomSeed(2);
     // for ( int i=0; i<50; i++ )
     //     values.insert( random() );
 }
 
 void loop() { 
-    // int msg = random();
-    // Serial.printf("sending:\t%08x\n", msg);
-    // sender->sendMessage( msg );
-    sender->sendMessage( 0x5555fafa );
-    delay( 2000 );
+    int msg = random();
+    Serial.print( "sending:\t" + String(msg, 2) + "\n" );
+    sender->sendMessage( msg );
     // Serial.printf("Thingies left:\t%i\n", values.size());
+    delay(2156);
 }
