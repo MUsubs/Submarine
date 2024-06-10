@@ -13,7 +13,8 @@
 class PrintListener : public sen::MessageListener {
 public:
     void messageReceived( uint32_t msg ) override {
-        Serial.print( "received:\t" + String(msg, 2) + "\n" );
+        // Serial.print( "received:\t" + String(msg, 2) + "\n" );
+        Serial.printf( "received: %08x\n", msg );
         // values.erase( msg );
     }
 };
@@ -27,8 +28,8 @@ void setup() {
     // serial monitor init
     Serial.begin( 57600 );
     // receivier objects
-    receiver = new sen::IrReceiver( 26, 100 );
-    decoder = new sen::MessageDecoder( *receiver, 2500 );
+    receiver = new sen::IrReceiver( 26, 100, 25000 );
+    decoder = new sen::MessageDecoder( *receiver, 5000 );
     listener = new PrintListener;
     decoder->setMessageListener( listener );
     // receiver task
@@ -42,7 +43,7 @@ void setup() {
     );
 
     // sender object
-    sender = new sen::SendIrControl( 22, 2500, 16 );
+    sender = new sen::SendIrControl( 22, 5000, 16 );
     // sender task
     xTaskCreate(
         []( void* ){ sender->main(); },
@@ -61,7 +62,7 @@ void setup() {
 
 void loop() { 
     int msg = random();
-    Serial.print( "sending:\t" + String(msg, 2) + "\n" );
+    Serial.printf( "sending: %08x\n", msg );
     sender->sendMessage( msg );
     // Serial.printf("Thingies left:\t%i\n", values.size());
     delay(2156);
