@@ -1,5 +1,7 @@
 #include "message_decoder.hpp"
 
+#include <Arduino.h>
+
 namespace sen {
 
 const float IMPRECISION_FACTOR = .1;
@@ -29,6 +31,7 @@ void MessageDecoder::signalDetected( uint32_t us ) {
 void MessageDecoder::pauseDetected( uint32_t us ) {
     // if currently waiting for a bit pause
     if ( _state == wait_for_bit_pause ) {
+        // Serial.printf("min: %f, max: %f, us: %i\n", _definition_us*MIN_FACTOR , _definition_us*2*MAX_FACTOR, us );
         // if the pause is correct length for a bit pause
         if ( us > _definition_us*MIN_FACTOR && us < _definition_us*2*MAX_FACTOR ) {
             // depending on pause length, append a one or zero to the message
@@ -40,7 +43,7 @@ void MessageDecoder::pauseDetected( uint32_t us ) {
             }
             _state = wait_for_bit_pause;
         // if there was a pause, but at a length more than 2 units
-        } else if ( us > _definition_us*2*MAX_FACTOR ) {
+        } else if ( us > _definition_us*3*MAX_FACTOR ) {
             // the message has ended, send to listener
             // also, go back to waiting for lead signals
             _message_listener->messageReceived( _message );

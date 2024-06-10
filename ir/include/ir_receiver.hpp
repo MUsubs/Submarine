@@ -16,7 +16,7 @@ public:
 
 class IrReceiver {
 public:
-    IrReceiver( int pin, int definition_us );
+    IrReceiver( int pin, int definition_us, int max_pause_us );
     void setIrListener( IrListener * ir_listener );
     void main();
 private:
@@ -24,6 +24,7 @@ private:
     int _pin;
     IrListener * _ir_listener;
     int _definition_us;
+    int _max_pause_us;
 };
 
 } // namespace sen

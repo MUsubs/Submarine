@@ -27,8 +27,8 @@ void setup() {
     // serial monitor init
     Serial.begin( 57600 );
     // receivier objects
-    receiver = new sen::IrReceiver( 26, 100 );
-    decoder = new sen::MessageDecoder( *receiver, 2500 );
+    receiver = new sen::IrReceiver( 26, 100, 25000 );
+    decoder = new sen::MessageDecoder( *receiver, 5000 );
     listener = new PrintListener;
     decoder->setMessageListener( listener );
     // receiver task
@@ -42,7 +42,7 @@ void setup() {
     );
 
     // sender object
-    sender = new sen::SendIrControl( 22, 2500, 16 );
+    sender = new sen::SendIrControl( 22, 5000, 16 );
     // sender task
     xTaskCreate(
         []( void* ){ sender->main(); },
