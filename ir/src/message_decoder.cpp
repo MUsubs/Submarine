@@ -4,7 +4,7 @@
 
 namespace sen {
 
-const float IMPRECISION_FACTOR = .1;
+const float IMPRECISION_FACTOR = .25;
 const float MAX_FACTOR = (1+IMPRECISION_FACTOR);
 const float MIN_FACTOR = (1-IMPRECISION_FACTOR);
 
@@ -17,6 +17,7 @@ MessageDecoder::MessageDecoder( IrReceiver & ir, int definition_us ) :
 
 void MessageDecoder::signalDetected( uint32_t us ) {
     // if currently waiting for a lead signal
+    // Serial.printf("rec sig us: %i\n", us );
     if ( _state == wait_for_lead_signal ) {
         // and the signal is the correct length for a lead signal
 
@@ -29,9 +30,9 @@ void MessageDecoder::signalDetected( uint32_t us ) {
 
 
 void MessageDecoder::pauseDetected( uint32_t us ) {
+    // Serial.printf("rec pause us: %i\n", us );
     // if currently waiting for a bit pause
     if ( _state == wait_for_bit_pause ) {
-        // Serial.printf("min: %f, max: %f, us: %i\n", _definition_us*MIN_FACTOR , _definition_us*2*MAX_FACTOR, us );
         // if the pause is correct length for a bit pause
         if ( us > _definition_us*MIN_FACTOR && us < _definition_us*2*MAX_FACTOR ) {
             // depending on pause length, append a one or zero to the message

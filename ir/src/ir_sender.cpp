@@ -16,6 +16,7 @@ IrSender::IrSender( int pin ) :
 
 void IrSender::sendSignal( Signal signal ) {
     // set pin on or off, depending on signal object
+    // Serial.printf( "sen t: %i, o: %i\n", signal.us, signal.on );
     analogWrite( _pin, signal.on ? 127 : 0 ); 
     // wait signal.us microseconds
     int64_t wait_start = time_us_64();
