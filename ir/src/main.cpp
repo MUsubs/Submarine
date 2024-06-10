@@ -13,7 +13,8 @@
 class PrintListener : public sen::MessageListener {
 public:
     void messageReceived( uint32_t msg ) override {
-        Serial.print( "received:\t" + String(msg, 2) + "\n" );
+        // Serial.print( "received:\t" + String(msg, 2) + "\n" );
+        Serial.printf( "received: %08x\n", msg );
         // values.erase( msg );
     }
 };
@@ -61,7 +62,7 @@ void setup() {
 
 void loop() { 
     int msg = random();
-    Serial.print( "sending:\t" + String(msg, 2) + "\n" );
+    Serial.printf( "sending: %08x\n", msg );
     sender->sendMessage( msg );
     // Serial.printf("Thingies left:\t%i\n", values.size());
     delay(2156);
