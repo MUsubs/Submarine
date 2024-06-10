@@ -5,11 +5,10 @@
 
 namespace sen {
 
-const int MAX_PAUSE_US = 10000;
-
-IrReceiver::IrReceiver( int pin, int definition_us ):
+IrReceiver::IrReceiver( int pin, int definition_us, int max_pause_us ):
     _pin( pin ),
-    _definition_us( definition_us )
+    _definition_us( definition_us ),
+    _max_pause_us( max_pause_us )
 {
     pinMode( _pin, INPUT_PULLDOWN );
 }
@@ -52,7 +51,7 @@ void IrReceiver::main( ) {
                 // keep track of pause length
                 us += _definition_us;
                 // if the pause exceeds max pause length, notify listener anyway
-                if ( us > MAX_PAUSE_US ) {
+                if ( us > _max_pause_us ) {
                     _ir_listener->pauseDetected( us );
                     us = 0;
                 }

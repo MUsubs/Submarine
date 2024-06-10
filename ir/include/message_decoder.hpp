@@ -18,9 +18,9 @@ public:
     void setMessageListener( MessageListener * message_listener );
 private:
     enum {
-        wait_for_lead_signal,
+        wait_for_bit_signal,
         wait_for_bit_pause
-    } _state = wait_for_lead_signal;
+    } _state = wait_for_bit_signal;
     int _definition_us;
     MessageListener * _message_listener;
     uint32_t _message;

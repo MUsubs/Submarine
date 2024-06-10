@@ -18,17 +18,12 @@ void SendIrControl::main() {
         uint32_t msg;
         xQueueReceive( _msg_queue, &msg, portMAX_DELAY );
         
-        _ir_sender.sendSignal( { .us=_unit_length_us, .on=true } );
-
         for ( int i=0; i<32; i++ ){
-            if ( (msg<<i) & 0x80000000 ) {
-                _ir_sender.sendSignal( { .us=_unit_length_us, .on=false } );
-                _ir_sender.sendSignal( { .us=_unit_length_us*2, .on=true } );
-            }
-            else {
-                _ir_sender.sendSignal( { .us=_unit_length_us*2, .on=false } );
+            if ( (msg<<i) & 0x80000000 )
                 _ir_sender.sendSignal( { .us=_unit_length_us, .on=true } );
-            }
+            else
+                _ir_sender.sendSignal( { .us=_unit_length_us / 2, .on=true } );
+            _ir_sender.sendSignal( { .us=_unit_length_us, .on=false } );
         }
     }
 }
