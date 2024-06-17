@@ -19,22 +19,18 @@ public:
     }
 };
 
-sen::IrReceiver * receiver;
-sen::MessageDecoder * decoder;
-sen::MessageListener * listener;
-sen::SendIrControl * sender;
+sen::IrReceiver receiver( 26, 250, 15000 );
+sen::MessageDecoder decoder( receiver, 2500 );
+PrintListener listener;
+sen::SendIrControl sender;
 
 void setup() {
     // serial monitor init
     Serial.begin( 57600 );
-    // receivier objects
-    receiver = new sen::IrReceiver( 26, 250, 15000 );
-    decoder = new sen::MessageDecoder( *receiver, 2500 );
-    listener = new PrintListener;
-    decoder->setMessageListener( listener );
-    // receiver task
+    // receivier config
+    decoder.setMessageListener( &listener );
     xTaskCreate(
-        []( void* ){ receiver->main(); },
+        []( void* ){ receiver.main(); },
         "ir receiver",
         4096,
         NULL,
@@ -42,11 +38,9 @@ void setup() {
         NULL
     );
 
-    // sender object
-    sender = new sen::SendIrControl( 22, 2500, 16 );
     // sender task
     xTaskCreate(
-        []( void* ){ sender->main(); },
+        []( void* ){ sender.main(); },
         "ir sender",
         2048,
         NULL,
@@ -63,7 +57,7 @@ void setup() {
 void loop() { 
     int msg = random();
     Serial.printf( "sending: %08x\n", msg );
-    sender->sendMessage( msg );
+    sender.sendMessage( msg );
     // Serial.printf("Thingies left:\t%i\n", values.size());
     delay(2123);
 }
