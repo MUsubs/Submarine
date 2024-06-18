@@ -2,7 +2,8 @@
 #define R2D2_SERIAL_CONTROL
 
 #include <Arduino.h>
-#include <FreeRTOS.h>
+#include "FreeRTOS.h"
+#include "task.h"
 
 #include <queue>
 #include <tuple>
@@ -41,6 +42,8 @@ public:
 private:
     std::queue<float> _measure_buffer;
     DummyDataSender& _data_sender;
+
+    enum class state_t {IDLE, READING, TRANSMIT}
 
     /**
      * @brief Add a measurement to measurements buffer

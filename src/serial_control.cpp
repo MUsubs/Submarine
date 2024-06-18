@@ -9,9 +9,9 @@ SerialControl::SerialControl( DummyDataSender& data_sender ) :
 }
 
 void SerialControl::run() {
-    for(;;) {
-        Serial.println("==TODO== implement SerialControl run task");
-        vTaskDelay(3000);
+    for ( ;; ) {
+        Serial.println( "==TODO== implement SerialControl run task" );
+        vTaskDelay( 3000 );
     }
 }
 
@@ -30,6 +30,13 @@ void SerialControl::transmitMeasures() {
 void SerialControl::sendPacket( const String& packet_string ) {
     std::deque<uint8_t> bytes_2_send = {};
     std::tuple<String*, int> command = extractCommand( packet_string );
+    if ( std::get<1>( command ) == 0 || std::get<0>( command ) == nullptr ) {
+        Serial.printf(
+            "==ERROR== invalid command '%s' with length 0 in "
+            "SerialControl::sendPacket() @%d\n",
+            std::get<0>( command )[0], __LINE__ );
+        return;
+    }
     String command_type = std::get<0>( command )[0];
     if ( command_type == "INST" ) {
         String instruction_str = std::get<0>( command )[1];
@@ -52,6 +59,7 @@ void SerialControl::sendPacket( const String& packet_string ) {
         bytes_2_send.emplace_back( _data_sender.generateUpdateHeader(
             data_type, std::get<1>( command ) - 2 ) );
 
+    // TODO : Move transmitting into its own state, not part of sendpacket
     } else if ( command_type == "TRANSMIT" ) {
         transmitMeasures();
         return;
@@ -74,11 +82,15 @@ std::tuple<String*, int> SerialControl::extractCommand( const String& input ) {
     int from_index = 0;
     int comma_index = input.indexOf( ',', from_index );
     for ( int i = 0; i < 10; i++ ) {
-        if ( comma_index == -1 ) return std::tuple<String*, int>{ args, i + 1 };
+        if ( comma_index == -1 ) {
+            args[i] = input.substring( from_index );
+            return std::tuple<String*, int>{ args, i + 1 };
+        }
         args[i] = input.substring( from_index, comma_index );
         from_index = comma_index + 1;
         comma_index = input.indexOf( ',', from_index );
     }
+    return std::tuple<String*, int>{ nullptr, 0 };
 }
 
 String SerialControl::readSerial() {
