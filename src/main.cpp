@@ -19,7 +19,7 @@ Mpu6050 gyro( mpu, kalmanFilter );
 
 void setup() {
     Wire.begin();
-    gyro.setGyroUp();
+    gyro.setUpGyro();
     Serial.begin( 115200 );
     adc_init();
     adc_set_temp_sensor_enabled( true );
@@ -77,7 +77,7 @@ void loop() {
 // void setup() {
 //     Serial.begin( 9600 );
 //     Wire.begin();
-//     gyro.setGyroUp();
+//     gyro.setUpGyro();
 // }
 
 // void loop() {
