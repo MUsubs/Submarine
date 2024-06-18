@@ -13,7 +13,7 @@ void TravelControl::calculateRotation()
                             (sqrt((prev_x) ^ 2 + (prev_z) ^ 2) *
                             sqrt((dest_x) ^ 2 + (dest_z) ^ 2)));
     angle = angle * (180 / (atan(1) * 4));
-    dummyMotor.adjust(angle);
+    steerControl.setSetpoint(angle);
 }
 
 void TravelControl::stop()

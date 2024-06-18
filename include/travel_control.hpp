@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include "motor_control.hpp"
+#include "steer_control.hpp"
 
 namespace asn {
 

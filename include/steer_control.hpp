@@ -2,6 +2,7 @@
 #define R2D2_STEERCONTROL_HPP
 
 #include "mpu6050.hpp"
+#include "motor_control.hpp"
 
 namespace asn {
 
@@ -9,10 +10,13 @@ class SteerControl
 {
 public:
     SteerControl(Mpu6050 &mpu);
+    void setSetpoint(float s);
     float PID();
-    void sendMove()
+    void sendMove();
 
 private:
+    float steer_action;
+    float pos_prev = 0.0;
     double setpoint = 0.0;
     double error = 0.0;
     double error_sum = 0.0;

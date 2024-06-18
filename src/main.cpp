@@ -25,16 +25,6 @@ void setup() {
 }
 
 void loop() {
-    Serial.print( "graden: " + String( round( gyro.getCurrent_z() ) ) );
-    if ( round( gyro.getCurrent_z() ) < gyro.getSetpoint() ) {
-        Serial.println( " left " );
-        motorControl.move( motorControl.direction_t::LEFT );
-        delay( 50 );
-    } else if ( round( gyro.getCurrent_z() ) > gyro.getSetpoint() ) {
-        Serial.println( " right " );
-        motorControl.move( motorControl.direction_t::RIGHT );
-        delay( 50 );
-    }
     if ( digitalRead( button_pins[0] ) == HIGH ) {
         motorControl.move( motorControl.direction_t::FORWARD );
         delay( 50 );
