@@ -9,6 +9,10 @@ SerialControl::SerialControl( DummyDataSender& data_sender ) :
 }
 
 void SerialControl::run() {
+    for(;;) {
+        Serial.println("==TODO== implement SerialControl run task");
+        vTaskDelay(3000);
+    }
 }
 
 // PRIVATE
@@ -59,7 +63,7 @@ void SerialControl::sendPacket( const String& packet_string ) {
     String coord;
     for ( int i = 2; i < std::get<1>( command ); i++ ) {
         coord = std::get<0>( command )[i];
-        coord = coord.substring(coord.indexOf('=')+1);
+        coord = coord.substring( coord.indexOf( '=' ) + 1 );
         bytes_2_send.emplace_back( map( coord.toFloat(), 0.0f, 1.0f, 0, 255 ) );
     }
     _data_sender.sendBytes( bytes_2_send );
@@ -78,9 +82,10 @@ std::tuple<String*, int> SerialControl::extractCommand( const String& input ) {
 }
 
 String SerialControl::readSerial() {
-    if (Serial.available() > 0){
+    if ( Serial.available() > 0 ) {
         return Serial.readString();
     }
+    return "";
 }
 
 }  // namespace sen
