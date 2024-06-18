@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Coordinates</title>
+</head>
+<body>
+    <h1>Enter Coordinates</h1>
+    <form method="POST" action="">
+        {% for i in range(num_values) %}
+            <fieldset>
+                <legend>Coordinate Set {{ i+1 }}</legend>
+                <label for="x_{{i}}">X:</label>
+                <input type="number" step="any" id="x_{{i}}" name="x_{{i}}" required><br>
+                <label for="y_{{i}}">Y:</label>
+                <input type="number" step="any" id="y_{{i}}" name="y_{{i}}" required><br>
+                <label for="z_{{i}}">Z:</label>
+                <input type="number" step="any" id="z_{{i}}" name="z_{{i}}" required><br>
+            </fieldset>
+        {% endfor %}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
