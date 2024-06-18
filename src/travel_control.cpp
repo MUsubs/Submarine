@@ -1,33 +1,33 @@
 #include "travel_control.hpp"
 
-namespace asn
+namespace asn {
+
+TravelControl::TravelControl()
 {
+}
 
-    TravelControl::TravelControl()
-    {
-    }
+void TravelControl::calculateRotation()
+{
+    float angle = acos((prev_x * dest_x) +
+                        (prev_z * dest_z) /
+                            (sqrt((prev_x) ^ 2 + (prev_z) ^ 2) *
+                            sqrt((dest_x) ^ 2 + (dest_z) ^ 2)));
+    angle = angle * (180 / (atan(1) * 4));
+    dummyMotor.adjust(angle);
+}
 
-    void TravelControl::calculateRotation()
-    {
-        float angle = acos((prev_x * dest_x) +
-                           (prev_z * dest_z) /
-                               (sqrt((prev_x) ^ 2 + (prev_z) ^ 2) *
-                                sqrt((dest_x) ^ 2 + (dest_z) ^ 2)));
-        angle = angle * (180 / (atan(1) * 4));
-        dummyMotor.adjust(angle);
-    }
+void TravelControl::stop()
+{
+    motorControl.move(motorControl.direction_t::STOP);
+}
 
-    void TravelControl::stop()
-    {
-    }
+void TravelControl::newDest()
+{
+}
 
-    void TravelControl::newDest()
-    {
-    }
-
-    void TravelControl::updateCurPos()
-    {
-    }
+void TravelControl::updateCurPos()
+{
+}
 
 } // namespace asn
 

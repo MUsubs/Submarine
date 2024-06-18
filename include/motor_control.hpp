@@ -1,5 +1,5 @@
-#ifndef MOTOR_CONTROL_HPP
-#define MOTOR_CONTROL_HPP
+#ifndef R2D2_MOTORCONTROL_HPP
+#define R2D2_MOTORCONTROL_HPP
 
 #include <Arduino.h>
 
@@ -30,4 +30,4 @@ namespace asn
 
 } // namespace asn
 
-#endif // MOTOR_CONTROL_HPP
+#endif // R2D2_MOTORCONTROL_HPP
