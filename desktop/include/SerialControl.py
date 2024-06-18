@@ -51,11 +51,7 @@ class SerialControl:
         self.ser.close()
         return return_code
 
-Serial_test = SerialControl()
-while True:
-    Serial_test.send_serial("INST,NEW_POS,X=1.0_,Y=2.0_,Z=3.0_", 8)
-    time.sleep(3)
-# Example usage:
-# obj = MyClass(param1, param2)
-# obj.method1(param)
-# obj.method2()
+# Serial_test = SerialControl()
+# while True:
+#     Serial_test.send_serial("INST,NEW_POS,X=1.0_,Y=2.0_,Z=3.0_", 8)
+#     time.sleep(3)
