@@ -18,16 +18,15 @@ public:
     void run();
 
 private:
-    std::queue<uint32_t> _measure_buffer;
+    std::queue<float> _measure_buffer;
     DummyDataSender& _data_sender;
 
-    void addMeasure( const uint32_t& measure );
+    void addMeasure( const float& measure );
     void transmitMeasures();
     void sendPacket( const String& packet_string );
 
+    std::tuple<String*, int> extractCommand( const String& input );
     String readSerial();
-
-    std::tuple<String*, int> extractCommand( String& input );
 };
 
 }  // namespace sen

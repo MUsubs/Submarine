@@ -14,9 +14,9 @@ public:
     DummyDataSender( int led_pin, int freq );
     void sendBytes( const std::deque<uint8_t>& bytes );
 
-    uint8_t generateInstructionHeader( Inst_t inst, uint8_t n_bytes );
-    uint8_t generateUpdateHeader( Data_t data_id, uint8_t n_bytes );
-    uint8_t generateSensorHeader( Sens_t sensor, uint8_t n_bytes );
+    uint8_t generateInstructionHeader( inst_t inst, uint8_t n_bytes );
+    uint8_t generateUpdateHeader( data_t data_id, uint8_t n_bytes );
+    uint8_t generateSensorHeader( sens_t sensor, uint8_t n_bytes );
 
 private:
     int _led_pin;
