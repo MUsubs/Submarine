@@ -35,8 +35,11 @@ def load_data_with_edges(image_dir, coordinates_data):
             # Edge detection toepassen
             edges = cv2.Canny(img, threshold1=100, threshold2=200)
             edges = cv2.resize(edges, (224, 224))  # Formaat aanpassen voor modelinvoer
-            edges = np.expand_dims(edges, axis=-1)  # Voeg kanaaldimensie toe voor modelinvoer
-            images.append(edges)
+            
+            # Convert to 3-channel image
+            edges_3ch = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
+            
+            images.append(edges_3ch)
             
             # Bijbehorende bounding box extraheren
             frame_name = filename.replace('.jpg', '.json')
@@ -72,7 +75,7 @@ train_generator = datagen.flow(images_train, boxes_train, batch_size=32)
 val_generator = datagen.flow(images_val, boxes_val, batch_size=32)
 
 # Laad VGG16 model zonder de top layers
-base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 1))  # Een kanaal voor grijswaarden afbeeldingen
+base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))  # Drie kanalen voor RGB afbeeldingen
 
 # Voeg aangepaste lagen toe
 x = Flatten()(base_model.output)
@@ -161,9 +164,12 @@ def predict_bounding_box(image_path, model):
         raise FileNotFoundError(f"Could not read image {image_path}")
     edges = cv2.Canny(img, threshold1=100, threshold2=200)
     edges_resized = cv2.resize(edges, (224, 224))
-    edges_normalized = edges_resized / 255.0
-    edges_input = np.expand_dims(edges_normalized, axis=-1)
-    edges_input = np.expand_dims(edges_input, axis=0)
+    
+    # Convert to 3-channel image
+    edges_3ch = cv2.cvtColor(edges_resized, cv2.COLOR_GRAY2RGB)
+    
+    edges_normalized = edges_3ch / 255.0
+    edges_input = np.expand_dims(edges_normalized, axis=0)
     
     pred_box = model.predict(edges_input)[0]
     return pred_box
