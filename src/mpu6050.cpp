@@ -59,12 +59,10 @@ float Mpu6050::getCurrent_z() {
 }
 
 void Mpu6050::kalman() {
-    current_time = millis();
+    currentTime = millis();
 
-    servo_pos = kalmanFilter.getAngle( mpu.getAngleZ(), mpu.getAccZ(),
-                                       ( current_time - prev_time ) / 1000 );
+    output = kalmanFilter.getAngle( mpu.getAngleZ(), mpu.getAccZ(),
+                                    ( currentTime - prevTime ) / 1000 );
 
-    prev_time = current_time;
+    prevTime = currentTime;
 }
-
-}  // namespace asn
