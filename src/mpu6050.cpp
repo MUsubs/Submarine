@@ -13,7 +13,7 @@ namespace asn
         return alpha * (previous_value + current_value - alpha * previous_value);
     }
 
-    void Mpu6050::setGyroUp()
+    void Mpu6050::setUpGyro()
     {
         Wire.begin();
         my_servo.attach(9);
