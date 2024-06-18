@@ -5,9 +5,6 @@
 #include "mpu6050.hpp"
 
 // aansturing 1 main:
-
-using namespace asn;
-
 static uint8_t motor_pins[7] = { 22, 21, 20, 19, 18, 12, 13 };
 static uint8_t button_pins[4] = { 16, 17, 26, 27 };
 MotorControl motorControl( motor_pins );
@@ -26,24 +23,24 @@ void setup() {
 
 void loop() {
     if ( digitalRead( button_pins[0] ) == HIGH ) {
-        motorControl.move( motorControl.direction_t::FORWARD );
+        asn::motorControl.move( motorControl.direction_t::FORWARD );
         delay( 50 );
-        motorControl.move( motorControl.direction_t::STOP );
+        asn::motorControl.move( motorControl.direction_t::STOP );
     }
     if ( digitalRead( button_pins[1] ) == HIGH ) {
-        motorControl.move( motorControl.direction_t::BACKWARD );
+        asn::motorControl.move( motorControl.direction_t::BACKWARD );
         delay( 50 );
-        motorControl.move( motorControl.direction_t::STOP );
+        asn::motorControl.move( motorControl.direction_t::STOP );
     }
     if ( digitalRead( button_pins[2] ) == HIGH ) {
-        motorControl.move( motorControl.direction_t::UP );
+        asn::motorControl.move( motorControl.direction_t::UP );
         delay( 50 );
-        motorControl.move( motorControl.direction_t::STOP );
+        asn::motorControl.move( motorControl.direction_t::STOP );
     }
     if ( digitalRead( button_pins[3] ) == HIGH ) {
-        motorControl.move( motorControl.direction_t::DOWN );
+        asn::motorControl.move( motorControl.direction_t::DOWN );
         delay( 50 );
-        motorControl.move( motorControl.direction_t::STOP );
+        asn::motorControl.move( motorControl.direction_t::STOP );
     }
 }
 
