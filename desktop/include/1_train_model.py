@@ -17,13 +17,9 @@ import matplotlib.pyplot as plt
 image_dir = 'Autonome-Navigatie\dataset_zwembad'  # Pad naar de map met jpg-afbeeldingen
 json_path = 'Autonome-Navigatie\combined.json'  # Pad naar het JSON-bestand met annotaties
 
-########verwerkt
 # JSON-gegevens laden
 with open(json_path) as f:
     coordinates_data = json.load(f)
-########verwerkt
-
-
 
 # Functie om afbeeldingen met edge detection en bijbehorende bounding boxes te laden
 def load_data_with_edges(image_dir, coordinates_data):
@@ -78,9 +74,6 @@ datagen = ImageDataGenerator(
 
 train_generator = datagen.flow(images_train, boxes_train, batch_size=32)
 val_generator = datagen.flow(images_val, boxes_val, batch_size=32)
-
-
-#################verwerkt
 
 # Laad VGG16 model zonder de top layers
 base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))  # Drie kanalen voor RGB afbeeldingen
