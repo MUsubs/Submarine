@@ -4,18 +4,81 @@ namespace sen {
 
 // PUBLIC
 
-SerialControl::SerialControl( DummyDataSender& data_sender ) :
-    _data_sender( data_sender ), _measure_buffer{} {
+SerialControl::SerialControl( DummyDataSender& data_sender,
+                              int task_priority ) :
+    _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{},
+    state{} {
+    xTaskCreate( staticRun, "SERIAL_CONTROL", 4000, this, task_priority,
+                 &_this_task_handle );
 }
 
-void SerialControl::run() {
-    for ( ;; ) {
-        Serial.println( "==TODO== implement SerialControl run task" );
-        vTaskDelay( 3000 );
-    }
+void SerialControl::activate() {
+    Serial.println( "==INFO== Activating Serial Control instance" );
+    vTaskResume( _this_task_handle );
+    state = state_t::READING;
+}
+
+void SerialControl::deactiveate() {
+    Serial.println( "==INFO== Deactivating Serial Control instance" );
+    vTaskSuspend( _this_task_handle );
+    state = state_t::IDLE;
+}
+
+void SerialControl::clearMeasurements() {
+    Serial.println( "==INFO== Clearing measurements buffer" );
+    std::queue<float> empty_buffer;
+    std::swap( _measure_buffer, empty_buffer );
 }
 
 // PRIVATE
+
+void SerialControl::run( void* pvParameters ) {
+    String serial_data;
+    for ( ;; ) {
+        // 0 = IDLE, 1 = READING, 2 = TRANSMIT, 3 = DATA_SEND
+        // Serial.printf("%d", state);
+        switch ( state ) {
+            case state_t::IDLE:
+                vTaskSuspend( _this_task_handle );
+                break;
+
+            case state_t::READING:
+                // Serial.println( "READING" );
+                serial_data = readSerialString();
+                if ( serial_data == "" ) {
+                    break;
+                }
+                if ( serial_data == "TRANSMT" ) {
+                    state = state_t::SERIAL_TRANSMIT;
+                    break;
+                }
+                state = state_t::DATA_SEND;
+                break;
+
+            case state_t::SERIAL_TRANSMIT:
+                // Serial.println( "TRANSMIT" );
+                transmitMeasures();
+                state = state_t::READING;
+                break;
+
+            case state_t::DATA_SEND:
+                // Serial.println( "SEND" );
+                sendPacket( serial_data );
+                state = state_t::READING;
+                break;
+
+            default:
+                Serial.print( "INVALID STATE" );
+                Serial.println( state );
+                break;
+        }
+    }
+}
+
+void SerialControl::staticRun( void* pvParameters ) {
+    SerialControl* self = reinterpret_cast<SerialControl*>( pvParameters );
+    self->run( pvParameters );
+}
 
 void SerialControl::addMeasure( const float& measure ) {
     _measure_buffer.emplace( measure );
@@ -23,7 +86,7 @@ void SerialControl::addMeasure( const float& measure ) {
 
 void SerialControl::transmitMeasures() {
     for ( ; !_measure_buffer.empty(); _measure_buffer.pop() ) {
-        Serial.printf( "SENS,TEMP,%f\r\t", _measure_buffer.front() );
+        Serial.printf( "SENS,TEMP,%f\n", _measure_buffer.front() );
     }
 }
 
@@ -59,11 +122,6 @@ void SerialControl::sendPacket( const String& packet_string ) {
         bytes_2_send.emplace_back( _data_sender.generateUpdateHeader(
             data_type, std::get<1>( command ) - 2 ) );
 
-    // TODO : Move transmitting into its own state, not part of sendpacket
-    } else if ( command_type == "TRANSMIT" ) {
-        transmitMeasures();
-        return;
-
     } else {
         return;
     }
@@ -93,9 +151,13 @@ std::tuple<String*, int> SerialControl::extractCommand( const String& input ) {
     return std::tuple<String*, int>{ nullptr, 0 };
 }
 
-String SerialControl::readSerial() {
+String SerialControl::readSerialString() {
+    digitalWrite( LED_BUILTIN, HIGH );
     if ( Serial.available() > 0 ) {
-        return Serial.readString();
+        digitalWrite( LED_BUILTIN, LOW );
+        String result = Serial.readString();
+        Serial.printf("INCOMING : %s\n", result.c_str() );
+        return result;
     }
     return "";
 }

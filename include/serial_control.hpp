@@ -32,18 +32,54 @@ public:
      *
      * @param data_sender SEN wireless data transmission sender
      */
-    SerialControl( DummyDataSender& data_sender );
+    SerialControl( DummyDataSender& data_sender, int task_priority );
+
 
     /**
-     * @brief Main loop of SerialControl for FreeRTOS task.
+     * @brief 
+     * Activate SerialControl task
+     * 
+     * @details
+     * Set active sephomore flag, take instance out of IDLE state, into READING state
+     * resuming FreeRTOS task
      */
-    void run();
+    void activate();
+
+    /**
+     * @brief 
+     * Deactivate SerialControl task, put instance into IDLE state
+     * suspending FreeRTOS task
+     */
+    void deactiveate();
+
+    /**
+     * @brief 
+     * Clear contents of measurements buffer
+     */
+    void clearMeasurements();
 
 private:
     std::queue<float> _measure_buffer;
     DummyDataSender& _data_sender;
+    xTaskHandle _this_task_handle;
 
-    enum class state_t {IDLE, READING, TRANSMIT}
+    // IDLE is fully suspended, task activates with activate() 
+    enum state_t {IDLE, READING, SERIAL_TRANSMIT, DATA_SEND};
+    state_t state = state_t::IDLE;
+
+    /**
+     * @brief Main loop of SerialControl for FreeRTOS task.
+     * 
+     * @param pvParameters Parameters to task function
+     */
+    void run(void* pvParameters);
+
+    /**
+     * @details static version of SerialConrol::run, for FreeRTOS task creation in 
+     * 
+     * @param pvParameters Parameters to task function
+     */
+    static void staticRun( void* pvParameters );
 
     /**
      * @brief Add a measurement to measurements buffer
@@ -53,7 +89,7 @@ private:
     void addMeasure( const float& measure );
 
     /**
-     * @brief Transmit and empty contents of measurements buffer
+     * @brief Transmit and empty contents of measurements buffer over Serial
      * 
      */
     void transmitMeasures();
@@ -75,7 +111,13 @@ private:
      * @return std::tuple<String*, int> Command + arguments in array of Strings, and number of items in array
      */
     std::tuple<String*, int> extractCommand( const String& input );
-    String readSerial();
+
+    /**
+     * @brief read Serial buffer with Serial object, return String
+     * 
+     * @return First available string from serial buffer, empty string if no available
+     */
+    String readSerialString();
 };
 
 }  // namespace sen
