@@ -6,13 +6,30 @@ import os
 import json
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'include'))
 from SerialControl import SerialControl
+from db import get_db, close_db, init_db, init_db_command, init_app
+
+def create_app(clear_database=True):
+    app = Flask(__name__)
+    database_path = os.path.normpath(os.path.join(os.path.dirname(os.path.dirname(app.instance_path)), r'include\flaskr.sqlite'))
+    print(database_path)
+    app.config.from_mapping(
+        SECRET_KEY='dev',
+        DATABASE=database_path,
+    )
+    server = Server(app, clear_database)
+    return app
 
 class Server:
-    def __init__(self):
+    def __init__(self, app, clear_database=False):
+        print("Constructor called")
         self.ser = serial.Serial()
-        self.app = Flask(__name__)
+        self.app = app
         self.configure_routes()
         self.server_serial = SerialControl()
+        if clear_database:
+            print("Clear database was True")
+            init_app(self.app, True)
+
 
     def configure_routes(self):
         @self.app.route('/')
@@ -32,6 +49,7 @@ class Server:
         @self.app.route('/input_coordinates/<int:num_values>', methods=['GET', 'POST'])
         def input_coordinates(num_values):
             if request.method == 'POST':
+                db = get_db()
                 coordinates = []
                 for i in range(num_values):
                     try:
@@ -43,7 +61,16 @@ class Server:
                         return jsonify(success=False, message="Invalid input for coordinates"), 400
 
                 for coord in coordinates:
-                    self.server_serial.send_serial(f'INST,X={coord[0]},Y={coord[1]},Z={coord[2]}', 5)
+                    try:
+                         db.execute(
+                    "INSERT INTO target_destinations (x, y, z) VALUES (?, ?, ?)",
+                    (coord[0], coord[1], coord[2]),
+                )   
+                         db.commit()  
+                         print("Values inserted into database")
+                    except db.IntegrityError:
+                        error = f"Coordinates {coord[0], coord[1], coord[2]} error"
+                    self.server_serial.send_serial(f'INST,X={coord[0]},Y={coord[1]},Z={coord[2]}', 8)
                 return redirect(url_for('index'))
             
             return render_template('input_coordinates.html', num_values=num_values)
@@ -65,7 +92,3 @@ class Server:
     def run(self, debug=True, use_reloader=False):
         self.app.run(debug=debug, use_reloader=use_reloader)
 
-if __name__ == '__main__':
-    app = Server()
-    app.run()
-    print("Test")

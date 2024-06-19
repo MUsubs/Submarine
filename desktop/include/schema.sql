@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS temperature;
+
+CREATE TABLE temperature (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  temperature FLOAT NOT NULL
+);
+
+CREATE TABLE target_destinations(
+    id integer PRIMARY KEY AUTOINCREMENT,
+    x FLOAT NOT NULL,
+    y FLOAT NOT NULL,
+    z FLOAT NOT NULL
+)
