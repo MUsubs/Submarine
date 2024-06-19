@@ -23,7 +23,7 @@ void SendIrControl::main() {
                 _ir_sender.sendSignal( { .us=_unit_length_us, .on=true } );
             else
                 _ir_sender.sendSignal( { .us=_unit_length_us / 2, .on=true } );
-            _ir_sender.sendSignal( { .us=_unit_length_us, .on=false } );
+            _ir_sender.sendSignal( { .us=_unit_length_us/2, .on=false } );
         }
     }
 }
