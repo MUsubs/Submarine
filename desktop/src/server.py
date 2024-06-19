@@ -43,7 +43,7 @@ class Server:
                         return jsonify(success=False, message="Invalid input for coordinates"), 400
 
                 for coord in coordinates:
-                    self.server_serial.send_serial(f'X{coord[0]} Y{coord[1]} Z{coord[2]}', 8)
+                    self.server_serial.send_serial(f'INST,X={coord[0]},Y={coord[1]},Z={coord[2]}', 5)
                 return redirect(url_for('index'))
             
             return render_template('input_coordinates.html', num_values=num_values)
