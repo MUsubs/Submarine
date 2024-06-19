@@ -3,6 +3,7 @@ import serial
 import time
 import sys
 import os
+import json
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'include'))
 from SerialControl import SerialControl
 
@@ -47,9 +48,24 @@ class Server:
             
             return render_template('input_coordinates.html', num_values=num_values)
 
+        @self.app.route('/data')
+        def data():
+            sensor_data_path = f'{os.getcwd()}\desktop\include\sensordata.json'
+            if not os.path.exists(sensor_data_path):
+                print(f"File not found: {sensor_data_path}, Current CWD: {os.getcwd()}")
+                return jsonify(success=False, message="Sensor data file not found"), 404
+            
+            try:
+                with open(sensor_data_path, 'r') as f:
+                    sensor_data = json.load(f)
+            except FileNotFoundError:
+                return jsonify(success=False, message="Sensor data file not found"), 404
+            return render_template('data.html', sensor_data=sensor_data)
+    
     def run(self, debug=True, use_reloader=False):
         self.app.run(debug=debug, use_reloader=use_reloader)
 
 if __name__ == '__main__':
     app = Server()
     app.run()
+    print("Test")

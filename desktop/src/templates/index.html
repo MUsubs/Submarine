@@ -1,15 +1,18 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coordinate Input</title>
+    <title>Index Page</title>
 </head>
 <body>
-    <h1>Welcome to the Coordinate Input System</h1>
-    <p>Click the button below to start entering your coordinates.</p>
-    <a href="/coordinates">
-        <button>Enter Coordinates</button>
-    </a>
+    <h1>Welcome to the Main Page</h1>
+    <form action="/coordinates" method="post">
+        <label for="num_values">How many values?</label>
+        <input type="number" id="num_values" name="num_values" min="1" required>
+        <input type="submit" value="Submit">
+    </form>
+    <br>
+    <button onclick="location.href='/data'">View Sensor Data</button>
 </body>
 </html>
