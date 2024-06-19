@@ -19,14 +19,15 @@ class SerialControl:
     def send_serial(self, string, com_port):
         self.ser.port = f"COM{com_port}"
         self.ser.baudrate = 9600
-        if(self.ser.isOpen() == False):
+        try:
             self.ser.open()
-        else:
+        except Exception as e:
             print(f"COM{com_port} not available. Try again or use another port.")
             return -1
         
         charList = []
         string = string.upper()
+        self.ser.write(string.encode())
         for character in string:
             charList.append(character)
         for item in charList:
