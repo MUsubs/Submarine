@@ -21,7 +21,7 @@ public:
     }
     bool contains( T value ) {
         xSemaphoreTake( _mutex, portMAX_DELAY );
-        bool r = _set.find( value ) == _set.end();
+        bool r = _set.find( value ) != _set.end();
         xSemaphoreGive( _mutex );
         return r;
     }
@@ -31,7 +31,13 @@ public:
         xSemaphoreGive( _mutex );
     }
     std::unordered_set<T> copy_set( ) {
-        return _set;
+        xSemaphoreTake( _mutex, portMAX_DELAY );
+        std::unordered_set<T> r = _set;
+        xSemaphoreGive( _mutex );
+        return r;
+    }
+    ~SharedSet() {
+        vSemaphoreDelete( _mutex );
     }
 private:
     std::unordered_set<T> _set;
@@ -53,7 +59,7 @@ public:
 sen::IrReceiver receiver( 26, UNIT_LENTGHT/17, UNIT_LENTGHT*6 );
 sen::MessageDecoder decoder( receiver, UNIT_LENTGHT );
 PrintListener listener;
-sen::SendIrControl sender( 9, UNIT_LENTGHT, 16 );
+sen::SendIrControl sender( 22, UNIT_LENTGHT, 16 );
 
 void setup() {
     // serial monitor init
@@ -90,18 +96,22 @@ void setup() {
 
 void loop() {
     auto set = send_values.copy_set();
-    auto msg_i = set.begin();
-    send_values.remove( *msg_i );
+    if ( !set.empty() ) {
+        auto msg = *set.begin();
+        send_values.remove( msg );
 
-    Serial.printf( "sending: %08x\n", *msg_i );
-    sender.sendMessage( *msg_i );
+        Serial.printf( "sending: %08x\n", msg );
+        sender.sendMessage( msg );
 
-    int correct_msg_count = 0;
-    for ( auto i : start_values.copy_set() )
-        if ( received_values.contains( i ) )
-            correct_msg_count++;
+        int correct_msg_count = 0;
+        for ( auto i : start_values.copy_set() ) {
+            if ( received_values.contains( i ) ) {
+                correct_msg_count++;
+            }
+        }
 
-    Serial.printf( "Thingies received:\t%i\n", correct_msg_count );
+        Serial.printf( "Thingies received:\t%i\n", correct_msg_count );
 
-    delay( 2000 );
+        delay( 2000 );
+    }
 }

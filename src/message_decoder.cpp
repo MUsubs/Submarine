@@ -16,11 +16,10 @@ MessageDecoder::MessageDecoder( IrReceiver & ir, int definition_us ) :
 
 
 void MessageDecoder::signalDetected( uint32_t us ) {
-    // Serial.printf("rec pause us: %i\n", us );
     // if currently waiting for a bit pause
     if ( _state == wait_for_bit_signal ) {
         // if the pause is correct length for a bit pause
-        if ( us > _definition_us * MIN_FACTOR * .5 && us < _definition_us * MAX_FACTOR ) {
+        if ( us > _definition_us * MIN_FACTOR / 2 && us < _definition_us * MAX_FACTOR ) {
             // depending on pause length, append a one or zero to the message
             if ( us < (_definition_us +_definition_us/2) / 2 ) {
                 _message <<= 1;
@@ -35,15 +34,14 @@ void MessageDecoder::signalDetected( uint32_t us ) {
 
 
 void MessageDecoder::pauseDetected( uint32_t us ) {
-    // if currently waiting for a lead signal
-    // Serial.printf("rec sig us: %i\n", us );
+    // if currently waiting for a pause
     if ( _state == wait_for_bit_pause ) {
-        // and the signal is the correct length for a lead signal
-        if ( us > _definition_us * MIN_FACTOR && us < _definition_us * MAX_FACTOR ) {
-            // wait for a lead pause
+        // and the pause is the correct length
+        if ( us > _definition_us / 2 * MIN_FACTOR && us < _definition_us / 2 * MAX_FACTOR ) {
+            // wait for a signal
             _state = wait_for_bit_signal;
         }
-        // if there was a pause, but at a length more than 2 units
+        // if there was a pause, but at a length more than 4 units
         else if ( us > _definition_us * 4 * MAX_FACTOR ) {
             // the message has ended, send to listener
             // also, go back to waiting for lead signals
