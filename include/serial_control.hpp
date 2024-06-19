@@ -6,6 +6,7 @@
 #include <array>
 #include <queue>
 #include <tuple>
+#include <map>
 
 #include "FreeRTOS.h"
 #include "dummy_data_sender.hpp"
@@ -79,7 +80,7 @@ private:
 
     // IDLE is fully suspended, task activates with activate()
     enum state_t { IDLE, READING, SERIAL_TRANSMIT, DATA_SEND };
-    state_t state = state_t::IDLE;
+    state_t _state;
 
     /**
      * @brief Main loop of SerialControl for FreeRTOS task.

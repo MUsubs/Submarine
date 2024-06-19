@@ -12,7 +12,7 @@ void setup() {
 
 void loop() {
     if ( serial_control.getMeasurementCount() <= 0 ) {
-        Serial.println("==DEBUG== Adding measurements to buffer");
+        Serial.println( "==DEBUG== Adding measurements to buffer" );
         serial_control.addMeasure( 10 );
         serial_control.addMeasure( 20 );
         serial_control.addMeasure( 30 );

@@ -7,7 +7,7 @@ namespace sen {
 SerialControl::SerialControl( DummyDataSender& data_sender,
                               int task_priority ) :
     _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{},
-    state{} {
+    _state{ state_t::IDLE } {
     xTaskCreate( staticRun, "SERIAL_CONTROL", 4000, this, task_priority,
                  &_this_task_handle );
 }
@@ -15,13 +15,13 @@ SerialControl::SerialControl( DummyDataSender& data_sender,
 void SerialControl::activate() {
     Serial.println( "==INFO== Activating Serial Control instance" );
     vTaskResume( _this_task_handle );
-    state = state_t::READING;
+    _state = state_t::READING;
 }
 
 void SerialControl::deactiveate() {
     Serial.println( "==INFO== Deactivating Serial Control instance" );
     vTaskSuspend( _this_task_handle );
-    state = state_t::IDLE;
+    _state = state_t::IDLE;
 }
 
 void SerialControl::clearMeasurements() {
@@ -44,7 +44,7 @@ void SerialControl::run( void* pvParameters ) {
     String serial_data;
     for ( ;; ) {
         // 0 = IDLE, 1 = READING, 2 = TRANSMIT, 3 = DATA_SEND
-        switch ( state ) {
+        switch ( _state ) {
             case state_t::IDLE:
                 vTaskSuspend( _this_task_handle );
                 break;
@@ -55,25 +55,25 @@ void SerialControl::run( void* pvParameters ) {
                     break;
                 }
                 if ( serial_data == "TRANSMIT" ) {
-                    state = state_t::SERIAL_TRANSMIT;
+                    _state = state_t::SERIAL_TRANSMIT;
                     break;
                 }
-                state = state_t::DATA_SEND;
+                _state = state_t::DATA_SEND;
                 break;
 
             case state_t::SERIAL_TRANSMIT:
                 transmitMeasures();
-                state = state_t::READING;
+                _state = state_t::READING;
                 break;
 
             case state_t::DATA_SEND:
                 sendPacket( serial_data );
-                state = state_t::READING;
+                _state = state_t::READING;
                 break;
 
             default:
                 Serial.print( "INVALID STATE" );
-                Serial.println( state );
+                Serial.println( _state );
                 break;
         }
     }
@@ -105,33 +105,22 @@ void SerialControl::sendPacket( const String& packet_string ) {
     }
     String command_type = std::get<0>( command )[0];
     if ( command_type == "INST" ) {
-        Serial.println( "==INFO== Command is Instruction" );
         String instruction_str = std::get<0>( command )[1];
         inst_t instruction_type;
 
-        if ( instruction_str == "NEW_POS" ) {
-            instruction_type = NEW_POS;
-            Serial.println( "Instruction = NEW_POS" );
-
-        } else if ( instruction_str == "ARRIVED" ) {
-            instruction_type = ARRIVED;
-            Serial.println( "Instruction = ARRIVED" );
-
-        } else if ( instruction_str == "STOP" ) {
-            instruction_type = STOP;
-            Serial.println( "Instruction = STOP" );
-
-        } else if ( instruction_str == "ACK" ) {
-            instruction_type = ACK;
-            Serial.println( "Instruction = ACK" );
-
+        if ( _single_byte_commands.find( instruction_str ) !=
+             _single_byte_commands.end() ) {
+            bytes_2_send.emplace_back( _single_byte_commands[instruction_str] );
         } else {
-            Serial.printf( "==ERROR== invalid instruction '%s'\n",
-                           instruction_str.c_str() );
+            if ( instruction_str == "NEW_POS" ) {
+                instruction_type = NEW_POS;
+            } else {
+                Serial.printf( "==ERROR== invalid instruction '%s'\n",
+                               instruction_str.c_str() );
+            }
+            bytes_2_send.emplace_back( _data_sender.generateInstructionHeader(
+                instruction_type, std::get<1>( command ) - 2 ) );
         }
-
-        bytes_2_send.emplace_back( _data_sender.generateInstructionHeader(
-            instruction_type, std::get<1>( command ) - 2 ) );
 
     } else if ( command_type == "UPDATE" ) {
         String data_str = std::get<0>( command )[1];
@@ -149,10 +138,9 @@ void SerialControl::sendPacket( const String& packet_string ) {
         coord = std::get<0>( command )[i];
         coord = coord.substring( coord.indexOf( '=' ) + 1 );
         Serial.printf( "==DEBUG== coord substring = %s\n", coord.c_str() );
-        Serial.printf( "==DEBUG== mapped coord = %d\n",
-                       map( coord.toFloat() * 100, 0, 100, 0, 255 ) );
-        bytes_2_send.emplace_back(
-            map( coord.toFloat() * 100, 0, 100, 0, 255 ) );
+        uint8_t mapped_coord = std::min(map( coord.toFloat() * 100, 0, 100, 0, 255 ), (long)255);
+        Serial.printf( "==DEBUG== mapped coord = %d\n", mapped_coord);
+        bytes_2_send.emplace_back(mapped_coord);
     }
     _data_sender.sendBytes( bytes_2_send );
 }
@@ -185,8 +173,9 @@ String SerialControl::readSerialString() {
     if ( Serial.available() > 0 ) {
         digitalWrite( LED_BUILTIN, LOW );
         String result = Serial.readString();
-        Serial.printf( "INCOMING : %s\n", result.c_str() );
         result.trim();
+        result.replace("\b", "");
+        Serial.printf( "INCOMING SERIAL STRING: '%s'\n", result.c_str() );
         return result;
     }
     return "";
