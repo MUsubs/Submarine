@@ -8,7 +8,7 @@ DummyDataSender::DummyDataSender( int led_pin, int freq ) :
 
 void DummyDataSender::sendBytes( const std::deque<uint8_t>& bytes ) {
     for ( const uint8_t& byte : bytes ) {
-        Serial.printf( "Sending byte %d\n", byte );
+        Serial.printf( "Sending byte %s\n", std::bitset<8>(byte).to_string().c_str() );
     }
 }
 

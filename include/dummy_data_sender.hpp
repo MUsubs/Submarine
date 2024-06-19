@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+#include <bitset>
 #include <deque>
 
 #include "dummy_sen_types.hpp"
