@@ -27,22 +27,21 @@ class SerialControl:
         
         charList = []
         string = string.upper()
-        self.ser.write(string.encode())
-        for character in string:
-            charList.append(character)
-        for item in charList:
-            self.ser.write(item.encode())
-            time.sleep(0.1)
+        print(f"Sending message : '{string}'")
+        self.ser.write(string.encode('utf-8'))
         print("Message sent!")
 
         # Wait for and read response from serial port
-        time.sleep(0.5)  # Wait a bit to ensure the response is available
+        time.sleep(0.5)
         return_code = 0
+        while self.ser.in_waiting <= 0:
+            pass
+
         if self.ser.in_waiting > 0:
             try:
-                response = self.ser.read(self.ser.in_waiting)
+                response = self.ser.readline(self.ser.in_waiting)
                 print("Response from serial port (raw bytes):", response)
-                decoded_response = response.decode('utf-8', errors='ignore')  # Decode while ignoring errors
+                decoded_response = response.decode('utf-8', errors='ignore')
                 print("Response from serial port (decoded):", decoded_response)
                 return_code = 0
             except Exception as e:
