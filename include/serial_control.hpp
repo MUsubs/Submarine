@@ -2,13 +2,14 @@
 #define R2D2_SERIAL_CONTROL
 
 #include <Arduino.h>
-#include "FreeRTOS.h"
-#include "task.h"
 
+#include <array>
 #include <queue>
 #include <tuple>
 
+#include "FreeRTOS.h"
 #include "dummy_data_sender.hpp"
+#include "task.h"
 
 namespace sen {
 
@@ -34,52 +35,28 @@ public:
      */
     SerialControl( DummyDataSender& data_sender, int task_priority );
 
-
     /**
-     * @brief 
+     * @brief
      * Activate SerialControl task
-     * 
+     *
      * @details
-     * Set active sephomore flag, take instance out of IDLE state, into READING state
-     * resuming FreeRTOS task
+     * Set active sephomore flag, take instance out of IDLE state, into READING
+     * state resuming FreeRTOS task
      */
     void activate();
 
     /**
-     * @brief 
+     * @brief
      * Deactivate SerialControl task, put instance into IDLE state
      * suspending FreeRTOS task
      */
     void deactiveate();
 
     /**
-     * @brief 
+     * @brief
      * Clear contents of measurements buffer
      */
     void clearMeasurements();
-
-private:
-    std::queue<float> _measure_buffer;
-    DummyDataSender& _data_sender;
-    xTaskHandle _this_task_handle;
-
-    // IDLE is fully suspended, task activates with activate() 
-    enum state_t {IDLE, READING, SERIAL_TRANSMIT, DATA_SEND};
-    state_t state = state_t::IDLE;
-
-    /**
-     * @brief Main loop of SerialControl for FreeRTOS task.
-     * 
-     * @param pvParameters Parameters to task function
-     */
-    void run(void* pvParameters);
-
-    /**
-     * @details static version of SerialConrol::run, for FreeRTOS task creation in 
-     * 
-     * @param pvParameters Parameters to task function
-     */
-    static void staticRun( void* pvParameters );
 
     /**
      * @brief Add a measurement to measurements buffer
@@ -89,33 +66,68 @@ private:
     void addMeasure( const float& measure );
 
     /**
+     * @brief Get the Measurement Count of measurement buffer
+     *
+     * @return int measurement count
+     */
+    int getMeasurementCount();
+
+private:
+    std::queue<float> _measure_buffer;
+    DummyDataSender& _data_sender;
+    xTaskHandle _this_task_handle;
+
+    // IDLE is fully suspended, task activates with activate()
+    enum state_t { IDLE, READING, SERIAL_TRANSMIT, DATA_SEND };
+    state_t state = state_t::IDLE;
+
+    /**
+     * @brief Main loop of SerialControl for FreeRTOS task.
+     *
+     * @param pvParameters Parameters to task function
+     */
+    void run( void* pvParameters );
+
+    /**
+     * @details static version of SerialConrol::run, for FreeRTOS task creation
+     * in
+     *
+     * @param pvParameters Parameters to task function
+     */
+    static void staticRun( void* pvParameters );
+
+    /**
      * @brief Transmit and empty contents of measurements buffer over Serial
-     * 
+     *
      */
     void transmitMeasures();
 
     /**
      * @brief Send packet according to command string
      * @details
-     * Interpret command string, generate header and data bytes, and send corresponding data packet with given data_sender; 
-     * Supports Instruction and Update packets, as well as the "TRANSMIT" command.
-     * 
+     * Interpret command string, generate header and data bytes, and send
+     * corresponding data packet with given data_sender; Supports Instruction
+     * and Update packets, as well as the "TRANSMIT" command.
+     *
      * @param packet_string Full command string as gotten from Serial buffer
      */
     void sendPacket( const String& packet_string );
 
     /**
      * @brief Extract command and arguments from command string
-     * 
+     *
      * @param input Full command string as gotten from Serial buffer
-     * @return std::tuple<String*, int> Command + arguments in array of Strings, and number of items in array
+     * @return std::tuple<String*, int> Command + arguments in array of Strings,
+     * and number of items in array
      */
-    std::tuple<String*, int> extractCommand( const String& input );
+    std::tuple<std::array<String, 10>, int> extractCommand(
+        const String& input );
 
     /**
      * @brief read Serial buffer with Serial object, return String
-     * 
-     * @return First available string from serial buffer, empty string if no available
+     *
+     * @return First available string from serial buffer, empty string if no
+     * available
      */
     String readSerialString();
 };

@@ -30,25 +30,31 @@ void SerialControl::clearMeasurements() {
     std::swap( _measure_buffer, empty_buffer );
 }
 
+void SerialControl::addMeasure( const float& measure ) {
+    _measure_buffer.emplace( measure );
+}
+
+int SerialControl::getMeasurementCount() {
+    return _measure_buffer.size();
+}
+
 // PRIVATE
 
 void SerialControl::run( void* pvParameters ) {
     String serial_data;
     for ( ;; ) {
         // 0 = IDLE, 1 = READING, 2 = TRANSMIT, 3 = DATA_SEND
-        // Serial.printf("%d", state);
         switch ( state ) {
             case state_t::IDLE:
                 vTaskSuspend( _this_task_handle );
                 break;
 
             case state_t::READING:
-                // Serial.println( "READING" );
                 serial_data = readSerialString();
                 if ( serial_data == "" ) {
                     break;
                 }
-                if ( serial_data == "TRANSMT" ) {
+                if ( serial_data == "TRANSMIT" ) {
                     state = state_t::SERIAL_TRANSMIT;
                     break;
                 }
@@ -56,13 +62,11 @@ void SerialControl::run( void* pvParameters ) {
                 break;
 
             case state_t::SERIAL_TRANSMIT:
-                // Serial.println( "TRANSMIT" );
                 transmitMeasures();
                 state = state_t::READING;
                 break;
 
             case state_t::DATA_SEND:
-                // Serial.println( "SEND" );
                 sendPacket( serial_data );
                 state = state_t::READING;
                 break;
@@ -80,11 +84,9 @@ void SerialControl::staticRun( void* pvParameters ) {
     self->run( pvParameters );
 }
 
-void SerialControl::addMeasure( const float& measure ) {
-    _measure_buffer.emplace( measure );
-}
-
 void SerialControl::transmitMeasures() {
+    Serial.printf( "==INFO== Transmitting, measure_buffer has %d items\n",
+                   _measure_buffer.size() );
     for ( ; !_measure_buffer.empty(); _measure_buffer.pop() ) {
         Serial.printf( "SENS,TEMP,%f\n", _measure_buffer.front() );
     }
@@ -92,26 +94,42 @@ void SerialControl::transmitMeasures() {
 
 void SerialControl::sendPacket( const String& packet_string ) {
     std::deque<uint8_t> bytes_2_send = {};
-    std::tuple<String*, int> command = extractCommand( packet_string );
-    if ( std::get<1>( command ) == 0 || std::get<0>( command ) == nullptr ) {
+    std::tuple<std::array<String, 10>, int> command =
+        extractCommand( packet_string );
+    if ( std::get<1>( command ) == 0 || std::get<0>( command ).empty() ) {
         Serial.printf(
             "==ERROR== invalid command '%s' with length 0 in "
-            "SerialControl::sendPacket() @%d\n",
+            "SerialControl::sendPacket() @serial_control.cpp:%d\n",
             std::get<0>( command )[0], __LINE__ );
         return;
     }
     String command_type = std::get<0>( command )[0];
     if ( command_type == "INST" ) {
+        Serial.println( "==INFO== Command is Instruction" );
         String instruction_str = std::get<0>( command )[1];
         inst_t instruction_type;
-        if ( instruction_str == "NEW_POS" )
+
+        if ( instruction_str == "NEW_POS" ) {
             instruction_type = NEW_POS;
-        else if ( instruction_str == "ARRIVED" )
+            Serial.println( "Instruction = NEW_POS" );
+
+        } else if ( instruction_str == "ARRIVED" ) {
             instruction_type = ARRIVED;
-        else if ( instruction_str == "STOP" )
+            Serial.println( "Instruction = ARRIVED" );
+
+        } else if ( instruction_str == "STOP" ) {
             instruction_type = STOP;
-        else if ( instruction_str == "ACK" )
+            Serial.println( "Instruction = STOP" );
+
+        } else if ( instruction_str == "ACK" ) {
             instruction_type = ACK;
+            Serial.println( "Instruction = ACK" );
+
+        } else {
+            Serial.printf( "==ERROR== invalid instruction '%s'\n",
+                           instruction_str.c_str() );
+        }
+
         bytes_2_send.emplace_back( _data_sender.generateInstructionHeader(
             instruction_type, std::get<1>( command ) - 2 ) );
 
@@ -130,25 +148,36 @@ void SerialControl::sendPacket( const String& packet_string ) {
     for ( int i = 2; i < std::get<1>( command ); i++ ) {
         coord = std::get<0>( command )[i];
         coord = coord.substring( coord.indexOf( '=' ) + 1 );
-        bytes_2_send.emplace_back( map( coord.toFloat(), 0.0f, 1.0f, 0, 255 ) );
+        Serial.printf( "==DEBUG== coord substring = %s\n", coord.c_str() );
+        Serial.printf( "==DEBUG== mapped coord = %d\n",
+                       map( coord.toFloat() * 100, 0, 100, 0, 255 ) );
+        bytes_2_send.emplace_back(
+            map( coord.toFloat() * 100, 0, 100, 0, 255 ) );
     }
     _data_sender.sendBytes( bytes_2_send );
 }
 
-std::tuple<String*, int> SerialControl::extractCommand( const String& input ) {
-    String args[10];
+std::tuple<std::array<String, 10>, int> SerialControl::extractCommand(
+    const String& input ) {
+    std::array<String, 10> args;
     int from_index = 0;
     int comma_index = input.indexOf( ',', from_index );
     for ( int i = 0; i < 10; i++ ) {
         if ( comma_index == -1 ) {
             args[i] = input.substring( from_index );
-            return std::tuple<String*, int>{ args, i + 1 };
+            Serial.println( "Extracted command:" );
+            for ( int j = 0; j < 10; j++ ) {
+                if ( args[j] == "" ) break;
+                Serial.printf( "%d : %s\n", j, args[j].c_str() );
+            }
+            return std::tuple<std::array<String, 10>, int>{ args, i + 1 };
         }
         args[i] = input.substring( from_index, comma_index );
         from_index = comma_index + 1;
         comma_index = input.indexOf( ',', from_index );
     }
-    return std::tuple<String*, int>{ nullptr, 0 };
+
+    return std::tuple<std::array<String, 10>, int>{ args, 0 };
 }
 
 String SerialControl::readSerialString() {
@@ -156,7 +185,8 @@ String SerialControl::readSerialString() {
     if ( Serial.available() > 0 ) {
         digitalWrite( LED_BUILTIN, LOW );
         String result = Serial.readString();
-        Serial.printf("INCOMING : %s\n", result.c_str() );
+        Serial.printf( "INCOMING : %s\n", result.c_str() );
+        result.trim();
         return result;
     }
     return "";
