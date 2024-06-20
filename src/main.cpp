@@ -50,9 +50,13 @@ SharedSet<uint32_t> received_values;
 
 class PrintListener : public sen::MessageListener {
 public:
-    void messageReceived( uint32_t msg ) override {
+    void messageReceived( uint8_t msg ) override {
         Serial.printf( "received: %08x\n", msg );
         received_values.add( msg );
+    }
+
+    void messageDone() override{
+        bool done = true;
     }
 };
 

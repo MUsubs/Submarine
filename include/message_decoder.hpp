@@ -7,7 +7,8 @@ namespace sen {
 
 class MessageListener {
 public:
-    virtual void messageReceived( uint32_t msg ) = 0;
+    virtual void messageReceived( uint8_t msg ) = 0;
+    virtual void messageDone() = 0;
 };
 
 class MessageDecoder : public IrListener {

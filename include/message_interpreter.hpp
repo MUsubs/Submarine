@@ -16,7 +16,8 @@ public:
     MessageInterpreter( int queue_length );
     ~MessageInterpreter();
 
-    void messageReceived( uint32_t msg ) override;
+    void messageReceived( uint8_t msg ) override;
+    void messageDone() override;
 
     void main();
 
@@ -24,6 +25,8 @@ private:
     enum stat_t { IDLE, HEADER, EXECUTE, ACKNOWLEDGE };
     stat_t state = IDLE;
     QueueHandle_t _packets_queue;
+
+    QueueHandle_t _message_done_queue;
 
     uint16_t readDataPackets( uint8_t &bytes_amount );
 
