@@ -1,6 +1,6 @@
 #include "dummy_sen_types.hpp"
 
-namespace sen{
+namespace sen {
 
 std::map<String, uint8_t> _single_byte_commands{
     { "ARRIVED", ( INST << 6 ) | ( ARRIVED << 3 ) },

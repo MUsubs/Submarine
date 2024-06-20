@@ -4,9 +4,9 @@
 #include <Arduino.h>
 
 #include <array>
+#include <map>
 #include <queue>
 #include <tuple>
-#include <map>
 
 #include "FreeRTOS.h"
 #include "dummy_data_sender.hpp"
@@ -121,8 +121,7 @@ private:
      * @return std::tuple<String*, int> Command + arguments in array of Strings,
      * and number of items in array
      */
-    std::tuple<std::array<String, 10>, int> extractCommand(
-        const String& input );
+    std::tuple<std::array<String, 10>, int> extractCommand( const String& input );
 
     /**
      * @brief read Serial buffer with Serial object, return String

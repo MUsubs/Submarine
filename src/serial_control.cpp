@@ -4,12 +4,9 @@ namespace sen {
 
 // PUBLIC
 
-SerialControl::SerialControl( DummyDataSender& data_sender,
-                              int task_priority ) :
-    _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{},
-    _state{ state_t::IDLE } {
-    xTaskCreate( staticRun, "SERIAL_CONTROL", 4000, this, task_priority,
-                 &_this_task_handle );
+SerialControl::SerialControl( DummyDataSender& data_sender, int task_priority ) :
+    _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{}, _state{ state_t::IDLE } {
+    xTaskCreate( staticRun, "SERIAL_CONTROL", 4000, this, task_priority, &_this_task_handle );
 }
 
 void SerialControl::activate() {
@@ -85,8 +82,7 @@ void SerialControl::staticRun( void* pvParameters ) {
 }
 
 void SerialControl::transmitMeasures() {
-    Serial.printf( "==INFO== Transmitting, measure_buffer has %d items\n",
-                   _measure_buffer.size() );
+    Serial.printf( "==INFO== Transmitting, measure_buffer has %d items\n", _measure_buffer.size() );
     for ( ; !_measure_buffer.empty(); _measure_buffer.pop() ) {
         Serial.printf( "SENS,TEMP,%f\n", _measure_buffer.front() );
     }
@@ -94,8 +90,7 @@ void SerialControl::transmitMeasures() {
 
 void SerialControl::sendPacket( const String& packet_string ) {
     std::deque<uint8_t> bytes_2_send = {};
-    std::tuple<std::array<String, 10>, int> command =
-        extractCommand( packet_string );
+    std::tuple<std::array<String, 10>, int> command = extractCommand( packet_string );
     if ( std::get<1>( command ) == 0 || std::get<0>( command ).empty() ) {
         Serial.printf(
             "==ERROR== invalid command '%s' with length 0 in "
@@ -108,26 +103,24 @@ void SerialControl::sendPacket( const String& packet_string ) {
         String instruction_str = std::get<0>( command )[1];
         inst_t instruction_type;
 
-        if ( _single_byte_commands.find( instruction_str ) !=
-             _single_byte_commands.end() ) {
+        if ( _single_byte_commands.find( instruction_str ) != _single_byte_commands.end() ) {
             bytes_2_send.emplace_back( _single_byte_commands[instruction_str] );
         } else {
             if ( instruction_str == "NEW_POS" ) {
                 instruction_type = NEW_POS;
             } else {
-                Serial.printf( "==ERROR== invalid instruction '%s'\n",
-                               instruction_str.c_str() );
+                Serial.printf( "==ERROR== invalid instruction '%s'\n", instruction_str.c_str() );
             }
-            bytes_2_send.emplace_back( _data_sender.generateInstructionHeader(
-                instruction_type, std::get<1>( command ) - 2 ) );
+            bytes_2_send.emplace_back(
+                _data_sender.generateInstructionHeader( instruction_type, std::get<1>( command ) - 2 ) );
         }
 
     } else if ( command_type == "UPDATE" ) {
         String data_str = std::get<0>( command )[1];
         data_t data_type;
         if ( data_str == "CURR" ) data_type = CURR;
-        bytes_2_send.emplace_back( _data_sender.generateUpdateHeader(
-            data_type, std::get<1>( command ) - 2 ) );
+        bytes_2_send.emplace_back(
+            _data_sender.generateUpdateHeader( data_type, std::get<1>( command ) - 2 ) );
 
     } else {
         return;
@@ -138,15 +131,14 @@ void SerialControl::sendPacket( const String& packet_string ) {
         coord = std::get<0>( command )[i];
         coord = coord.substring( coord.indexOf( '=' ) + 1 );
         Serial.printf( "==DEBUG== coord substring = %s\n", coord.c_str() );
-        uint8_t mapped_coord = std::min(map( coord.toFloat() * 100, 0, 100, 0, 255 ), (long)255);
-        Serial.printf( "==DEBUG== mapped coord = %d\n", mapped_coord);
-        bytes_2_send.emplace_back(mapped_coord);
+        uint8_t mapped_coord = std::min( map( coord.toFloat() * 100, 0, 100, 0, 255 ), (long)255 );
+        Serial.printf( "==DEBUG== mapped coord = %d\n", mapped_coord );
+        bytes_2_send.emplace_back( mapped_coord );
     }
     _data_sender.sendBytes( bytes_2_send );
 }
 
-std::tuple<std::array<String, 10>, int> SerialControl::extractCommand(
-    const String& input ) {
+std::tuple<std::array<String, 10>, int> SerialControl::extractCommand( const String& input ) {
     std::array<String, 10> args;
     int from_index = 0;
     int comma_index = input.indexOf( ',', from_index );
@@ -174,7 +166,7 @@ String SerialControl::readSerialString() {
         digitalWrite( LED_BUILTIN, LOW );
         String result = Serial.readString();
         result.trim();
-        result.replace("\b", "");
+        result.replace( "\b", "" );
         Serial.printf( "INCOMING SERIAL STRING: '%s'\n", result.c_str() );
         return result;
     }
