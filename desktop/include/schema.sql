@@ -1,8 +1,9 @@
 DROP TABLE IF EXISTS temperature;
+DROP TABLE IF EXISTS target_destinations;
 
 CREATE TABLE temperature (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  temperature FLOAT NOT NULL
+  temperature_value FLOAT NOT NULL
 );
 
 CREATE TABLE target_destinations(

@@ -8,6 +8,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'include'))
 from SerialControl import SerialControl
 from db import get_db, close_db, init_db, init_db_command, init_app
 
+# PLACEHOLDER FUNCTION
+def read_current_location():
+    return 0.1, 0.2, 0.3
+
 def create_app(clear_database=True):
     app = Flask(__name__)
     database_path = os.path.normpath(os.path.join(os.path.dirname(os.path.dirname(app.instance_path)), r'include\flaskr.sqlite'))
@@ -71,7 +75,7 @@ class Server:
                     except db.IntegrityError:
                         error = f"Coordinates {coord[0], coord[1], coord[2]} error"
                     self.server_serial.send_serial(f'INST,X={coord[0]},Y={coord[1]},Z={coord[2]}', 8)
-                return redirect(url_for('index'))
+                return redirect(url_for('send_current_location'))
             
             return render_template('input_coordinates.html', num_values=num_values)
 
@@ -88,6 +92,27 @@ class Server:
             except FileNotFoundError:
                 return jsonify(success=False, message="Sensor data file not found"), 404
             return render_template('data.html', sensor_data=sensor_data)
+        
+        @self.app.route('/send_current_location')
+        def send_current_location():
+            x, y, z = read_current_location()
+            serial_response = self.server_serial.send_serial(f"UPDATE,CURR,X{x},Y{y},Z{z}", 8)
+            if serial_response != 0:
+                db = get_db()
+                label, value = serial_response.split(',')
+                temperature_value = float(value.strip())
+                print(temperature_value)
+                try:
+                    db.execute(
+                "INSERT INTO temperature (temperature_value) VALUES (?)",
+                (temperature_value,),
+                )   
+                    db.commit()  
+                    print("Values inserted into database")
+                except db.IntegrityError:
+                        error = f"Temperature {temperature_value} error"
+            return render_template('send_current_location.html', x=x, y=y, z=z)
+
     
     def run(self, debug=True, use_reloader=False):
         self.app.run(debug=debug, use_reloader=use_reloader)

@@ -51,8 +51,10 @@ class SerialControl:
             print("No response from the serial port.")
             return_code = -1
         
-        # Close serial port after sending string
         self.ser.close()
+        if return_code == 0:
+            return decoded_response
+        # Close serial port after sending string
         return return_code
 
     def read_serial(self, com_port):
