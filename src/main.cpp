@@ -9,9 +9,9 @@
 #include <Arduino.h>
 const int frequency = 30;
 
-sen::DataSender sender( 22, frequency, 32, 1 );
-sen::SerialControl serial_control{ sender, 1 };
-sen::PhotoDiode diode( 26, frequency * 20, 20 * 4 * 2, 1 );
+sen::DataSender sender( 22, frequency, 32, 2 );
+sen::SerialControl serial_control{ sender, 2 };
+sen::PhotoDiode diode( 26, frequency * 20, 20 * 4 * 2, 2 );
 sen::DataReceiver receiver( frequency );
 sen::MessageInterpreter interpreter( 32 );
 

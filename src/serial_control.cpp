@@ -138,8 +138,8 @@ void SerialControl::sendPacket( const String& packet_string ) {
         bytes_2_send.emplace_back( mapped_coord );
     }
     // TODO: BUGFIX, ALWAYS SENDS EVEN ON INVALID INSTRUCTION
-    for ( const auto& b : bytes_2_send ) {
-        R2D2_DEBUG_LOG("Byte to send: %d")
+    for ( const uint8_t& b : bytes_2_send ) {
+        R2D2_DEBUG_LOG("Byte to send: %#02x", b);
     }
     _data_sender.sendBytes( bytes_2_send );
 }
