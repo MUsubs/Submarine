@@ -53,7 +53,7 @@ class SerialControl:
         
         self.ser.close()
         if return_code == 0:
-            return decoded_response
+            return decoded_response, return_code
         # Close serial port after sending string
         return return_code
 
@@ -80,9 +80,30 @@ class SerialControl:
             return_code = -1
         self.ser.close()
         if return_code == 0:
-            return decoded_response
+            return decoded_response, return_code
         # Close serial port after sending string
-        return return_code
+        return return_code, return_code
+    
+    def parse_response(self, response):
+        print(response)
+        try:
+            if response == "INST,STOP":
+                return "INST_STOP", None, 0
+            elif response == "INST,ACK":
+                return "INST_ACK", None, 0
+            elif isinstance(response, tuple):
+               if response[0].startswith("SENS,TEMP"):
+                    try:
+                        temp = float(response[0].split(',')[2])
+                        return "TEMP", temp, 0
+                    except (IndexError, ValueError) as e:
+                        print(f"Error parsing SENS,TEMP: {e}")
+                        return "ERROR", None, -1
+            else:
+                print(f"Unsupported command: {response}")
+                return "ERROR", None, -1
+        except (IndexError, ValueError) as e:
+            print(f"Error parsing response: {response}. exception: {e}")
 # Serial_test = SerialControl()
 # while True:
 #     Serial_test.send_serial("INST,NEW_POS,X=1.0_,Y=2.0_,Z=3.0_", 8)

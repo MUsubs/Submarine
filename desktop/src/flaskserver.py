@@ -25,13 +25,11 @@ def create_app(clear_database=True):
 
 class Server:
     def __init__(self, app, clear_database=False):
-        print("Constructor called")
         self.ser = serial.Serial()
         self.app = app
         self.configure_routes()
         self.server_serial = SerialControl()
         if clear_database:
-            print("Clear database was True")
             init_app(self.app, True)
 
 
@@ -74,7 +72,25 @@ class Server:
                          print("Values inserted into database")
                     except db.IntegrityError:
                         error = f"Coordinates {coord[0], coord[1], coord[2]} error"
-                    self.server_serial.send_serial(f'INST,X={coord[0]},Y={coord[1]},Z={coord[2]}', 8)
+                    x, y, z = read_current_location()
+                    self.server_serial.send_serial(f"UPDATE,CURR,X={x},Y={y},Z={z}", 8)
+                    
+                    server_response, serial_return = self.server_serial.send_serial(f'INST,NEW_POS,X={coord[0]},Y={coord[1]},Z={coord[2]}', 8)
+                    response_command, _, _ = self.server_serial.parse_response(server_response)
+                    print(response_command)
+
+                    # Everything in the while loop is for future use
+                    while (serial_return != 0 or response_command != "INST_ACK"):
+                        print("IN WHILE")
+                        server_response, serial_return = self.server_serial.read_serial(8)
+                        print(f"SERVER RESPONSE IF: {server_response}")
+                        response_command, _, _ = self.server_serial.parse_response(server_response)
+                        if response_command == "INST_ACK":
+                            print("I GOT THAT DAWG IN ME (ACK received)")
+                            break
+                            #return redirect(url_for('send_current_location'))
+                        else:
+                            print("In else statement thingy")
                 return redirect(url_for('send_current_location'))
             
             return render_template('input_coordinates.html', num_values=num_values)
@@ -99,18 +115,19 @@ class Server:
             serial_response = self.server_serial.send_serial(f"UPDATE,CURR,X{x},Y{y},Z{z}", 8)
             if serial_response != 0:
                 db = get_db()
-                label, value = serial_response.split(',')
-                temperature_value = float(value.strip())
-                print(temperature_value)
-                try:
-                    db.execute(
-                "INSERT INTO temperature (temperature_value) VALUES (?)",
-                (temperature_value,),
-                )   
-                    db.commit()  
-                    print("Values inserted into database")
-                except db.IntegrityError:
-                        error = f"Temperature {temperature_value} error"
+                response_command, temperature_value, error_code = self.server_serial.parse_response(serial_response)
+                if temperature_value != None:
+                    try:
+                        db.execute(
+                    "INSERT INTO temperature (temperature_value) VALUES (?)",
+                    (temperature_value,),
+                    )   
+                        db.commit()  
+                        print("Values inserted into database")
+                    except db.IntegrityError:
+                            error = f"Temperature {temperature_value} error"
+                else:
+                    print(f"Serial response not a temperature value. Response command:{response_command}, Temperature value:{temperature_value}, Error code:{error_code}")
             return render_template('send_current_location.html', x=x, y=y, z=z)
 
         @self.app.route('/temperatures')
