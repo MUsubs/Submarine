@@ -6,10 +6,10 @@
 
 namespace sen {
 
-PhotoDiode::PhotoDiode( int pin, int poll_frequency, int max_pause_us ):
+PhotoDiode::PhotoDiode( int pin, int poll_frequency, int max_pause_polls ):
     _pin( pin ),
     _wait_us( 1'000'000 / poll_frequency ),
-    _max_pause_us( max_pause_us )
+    _max_pause_us( max_pause_polls*_wait_us )
 {
     pinMode( _pin, INPUT_PULLDOWN );
 }

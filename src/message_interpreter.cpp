@@ -6,8 +6,12 @@ MessageInterpreter::MessageInterpreter( int queue_length ) :
     _packets_queue( xQueueCreate( queue_length, sizeof( uint32_t ) ) ) {
 }
 
-void MessageInterpreter::messageReceived( uint32_t msg ) {
+void MessageInterpreter::byteReceived( uint8_t msg ) {
     xQueueSend( _packets_queue, &msg, 0 );
+}
+
+void MessageInterpreter::messageDone() {
+    
 }
 
 void MessageInterpreter::interpretHeader( sen::packet_t &type,

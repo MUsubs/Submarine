@@ -3,20 +3,22 @@
 
 #include <FreeRTOS.h>
 #include <queue.h>
+#include <semphr.h>
+#include <Arduino.h>
 
 #include <cstdint>
 
 #include "packet_enums.h"
-#include "message_decoder.hpp"
 
 namespace sen {
 
-class MessageInterpreter : public sen::MessageListener {
+class MessageInterpreter {
 public:
     MessageInterpreter( int queue_length );
     ~MessageInterpreter();
 
-    void messageReceived( uint32_t msg ) override;
+    void byteReceived( uint8_t msg );
+    void messageDone();
 
     void main();
 
