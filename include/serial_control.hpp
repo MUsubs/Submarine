@@ -10,8 +10,8 @@
 
 #include "FreeRTOS.h"
 #include "data_sender.hpp"
-#include "task.h"
 #include "packet_enums.h"
+#include "task.h"
 
 namespace sen {
 
@@ -74,13 +74,19 @@ public:
      */
     int getMeasurementCount();
 
+    /**
+     * @brief
+     * Received ACK packet from IR
+     */
+    void receivedACK();
+
 private:
     std::queue<float> _measure_buffer;
     DataSender& _data_sender;
     xTaskHandle _this_task_handle;
 
     // IDLE is fully suspended, task activates with activate()
-    enum state_t { IDLE, READING, SERIAL_TRANSMIT, DATA_SEND };
+    enum state_t { IDLE, READING, SERIAL_TRANSMIT, DATA_SEND, SERIAL_ACK };
     state_t _state;
 
     /**
@@ -103,6 +109,12 @@ private:
      *
      */
     void transmitMeasures();
+
+    /**
+     * @brief
+     * Transmit ACK packet over Serial
+     */
+    void transmitACK();
 
     /**
      * @brief Send packet according to command string
