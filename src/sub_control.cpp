@@ -59,6 +59,7 @@ void SubControl::receivedUPDATE( UpdatePacket_t& update_p ) {
 
 void SubControl::run() {
     bool b_reset = false;
+    bool b_update_before_new = false;
 
     struct InstPacket_t received_inst;
     struct UpdatePacket_t received_update;
@@ -85,7 +86,20 @@ void SubControl::run() {
                     xQueueReset( _inst_queue );
                     xQueueReset( _update_queue );
                     b_reset = false;
+                    b_update_before_new = false;
                 }
+                if ( xQueueReceive( _update_queue, &received_update, 0 ) ) {
+                    R2D2_DEBUG_LOG(
+                        "State:%d - SubControl Received an UPDATE with args: %d, %d, %d", _state,
+                        received_update.data_bytes[0], received_update.data_bytes[1],
+                        received_update.data_bytes[2] );
+                    float x = received_update.data_bytes[0] / 255.0;
+                    float y = received_update.data_bytes[1] / 255.0;
+                    float z = received_update.data_bytes[2] / 255.0;
+                    _travel_control.updateCurPos( x, y, z );
+                    b_update_before_new = true;
+                }
+
                 if ( xQueueReceive( _inst_queue, &received_inst, 0 ) ) {
                     if ( received_inst.inst_type == STOP ) {
                         R2D2_DEBUG_LOG(
@@ -100,17 +114,22 @@ void SubControl::run() {
                             "%d, %d",
                             _state, received_inst.data_bytes[0], received_inst.data_bytes[1],
                             received_inst.data_bytes[2] );
-                        float x = received_inst.data_bytes[0] / 255.0;
-                        float y = received_inst.data_bytes[1] / 255.0;
-                        float z = received_inst.data_bytes[2] / 255.0;
-                        _travel_control.newDest( x, y, z );
 
-                        send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
-                        _data_sender.sendBytes( send_bytes );
+                        if ( b_update_before_new ) {
+                            xQueueReset( _update_queue );
+                            float x = received_inst.data_bytes[0] / 255.0;
+                            float y = received_inst.data_bytes[1] / 255.0;
+                            float z = received_inst.data_bytes[2] / 255.0;
+                            _travel_control.newDest( x, y, z );
 
-                        xQueueReset( _update_queue );
-                        _state = state_t::TRAVEL;
-                        break;
+                            send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                            _data_sender.sendBytes( send_bytes );
+
+                            _state = state_t::TRAVEL;
+                            break;
+                        } else {
+                            break;
+                        }
                     }
                     R2D2_DEBUG_LOG(
                         "State:%d - SubControl Received instruction type %d", _state,

@@ -25,7 +25,12 @@ std::array<uint8_t, 3> d{ 3, 4, 5 };
 
 namespace sen {
 void simulateFullCommunication() {
-    Serial.println("==TEST== simulating full communication");
+    Serial.println( "==TEST== simulating full communication" );
+    sub_control.receivedINST( NEW_POS, a );
+    // SubControl should do nothing
+    vTaskDelay(1000);
+
+    sub_control.receivedUPDATE( CURR, b );
     sub_control.receivedINST( NEW_POS, a );
     // SubControl should set new pos and send ACK
     vTaskDelay( 1000 );
@@ -45,13 +50,13 @@ void simulateFullCommunication() {
     sub_control.receivedINST( ACK );
     // SubControl should reset queues and start loop again
     vTaskDelay( 2000 );
-    Serial.println("==TEST== full communication test finished");
-    Serial.println("=========================================");
-    Serial.println("=========================================");
+    Serial.println( "==TEST== full communication test finished" );
+    Serial.println( "=========================================" );
+    Serial.println( "=========================================" );
 }
 
 void simulateStoppedCommunication() {
-    Serial.println("==TEST== simulating stopped communication");
+    Serial.println( "==TEST== simulating stopped communication" );
     sub_control.receivedINST( STOP );
     // SubControl should send ACK, reset queues and start loop again
     vTaskDelay( 1000 );
@@ -67,9 +72,9 @@ void simulateStoppedCommunication() {
     // SubControl should send ACK, reset queues and start loop again
 
     vTaskDelay( 2000 );
-    Serial.println("==TEST== stopped communication test finished");
-    Serial.println("============================================");
-    Serial.println("============================================");
+    Serial.println( "==TEST== stopped communication test finished" );
+    Serial.println( "============================================" );
+    Serial.println( "============================================" );
 }
 }  // namespace sen
 
@@ -80,7 +85,7 @@ void setup() {
     vTaskDelay( 2000 );
     sub_control.activate();
 
-    vTaskDelay(1000);
+    vTaskDelay( 1000 );
     sen::simulateFullCommunication();
     vTaskDelay( 10000 );
     sen::simulateStoppedCommunication();
