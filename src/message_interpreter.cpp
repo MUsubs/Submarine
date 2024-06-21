@@ -3,7 +3,7 @@
 namespace sen {
 
 MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
-    _packets_queue( xQueueCreate( queue_length, sizeof( uint32_t ) ) ),
+    _packets_queue( xQueueCreate( queue_length, sizeof( uint8_t ) ) ),
     _message_done_queue( xQueueCreate( 10, sizeof( uint8_t ) ) ) {
     xTaskCreate( staticRun, "MESSAGE_INTERPRETER", 4000, (void *)this,
                  task_priority, &_this_task_handle );
@@ -21,11 +21,13 @@ void MessageInterpreter::deactivate() {
     _state = state_t::IDLE;
 }
 
-void MessageInterpreter::messageReceived( uint8_t msg ) {
+void MessageInterpreter::byteReceived( uint8_t msg ) {
+    Serial.printf( "received %02x\n", msg );
     xQueueSend( _packets_queue, &msg, 0 );
 }
 
 void MessageInterpreter::messageDone() {
+    Serial.printf( "done\n" );
     uint8_t msg = 1;
     xQueueSend( _message_done_queue, &msg, 0 );
 }
@@ -152,5 +154,6 @@ void MessageInterpreter::staticRun( void* pvParameters ) {
     message_interpreter->run();
     vTaskDelete( message_interpreter->_this_task_handle );
 }
+
 
 }  // namespace sen

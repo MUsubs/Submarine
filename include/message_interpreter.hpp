@@ -3,17 +3,18 @@
 
 #include <FreeRTOS.h>
 #include <queue.h>
+#include <semphr.h>
+#include <Arduino.h>
 
 #include <cstdint>
 
-#include "message_decoder.hpp"
 #include "packet_enums.h"
 
 namespace sen {
 
 #define DATA_ARRAY_SIZE 10
 
-class MessageInterpreter : public sen::MessageListener {
+class MessageInterpreter {
 public:
     MessageInterpreter( int queue_length, int task_priority );
     ~MessageInterpreter();
@@ -21,8 +22,8 @@ public:
     void activate();
     void deactivate();
 
-    void messageReceived( uint8_t msg ) override;
-    void messageDone() override;
+    void byteReceived( uint8_t msg );
+    void messageDone();
 
 private:
     enum state_t { IDLE, READ, MESSAGE };
