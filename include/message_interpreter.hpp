@@ -6,32 +6,53 @@
 
 #include <cstdint>
 
-#include "packet_enums.h"
 #include "message_decoder.hpp"
+#include "packet_enums.h"
 
 namespace sen {
 
+#define DATA_ARRAY_SIZE 10
+
 class MessageInterpreter : public sen::MessageListener {
 public:
-    MessageInterpreter( int queue_length );
+    MessageInterpreter( int queue_length, int task_priority );
     ~MessageInterpreter();
+
+    void activate();
+    void deactivate();
 
     void messageReceived( uint8_t msg ) override;
     void messageDone() override;
 
-    void main();
-
 private:
-    enum stat_t { IDLE, HEADER, EXECUTE, ACKNOWLEDGE };
-    stat_t state = IDLE;
+    enum state_t { IDLE, READ, MESSAGE };
+    state_t _state = IDLE;
+
     QueueHandle_t _packets_queue;
-
     QueueHandle_t _message_done_queue;
+    xTaskHandle _this_task_handle;
 
-    uint16_t readDataPackets( uint8_t &bytes_amount );
+    uint8_t data_array[DATA_ARRAY_SIZE] = { 0 };
+
+    uint8_t bytes_amount = 0;
+
+    sen::packet_t type = packet_t::NONE;
+    sen::inst_t instruction = inst_t::NONE;
+    sen::sens_t sensor_id = sens_t::NONE;
+    sen::data_t data_type = data_t::NONE;
+
+    uint8_t useless_byte;
+
+    void readDataPackets( uint8_t &bytes_amount );
 
     void interpretHeader( sen::packet_t &type, sen::inst_t &instruction,
-                          sen::sens_t &sensor_id, sen::data_t &data_type, uint8_t &bytes_amount );
+                          sen::sens_t &sensor_id, sen::data_t &data_type,
+                          uint8_t &bytes_amount );
+
+    void clear();
+
+    void run();
+    static void staticRun( void *pvParameters );
 };
 
 }  // namespace sen
