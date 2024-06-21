@@ -43,16 +43,18 @@ void DataReceiver::pauseDetected( uint32_t us ) {
         }
         // byte ended if pause between 2 and 4 units
         else if ( us > _unit_us * 2 * MIN_FACTOR && us < _unit_us * 4 ) {
-            // Serial.printf( "byte %02x %i\n", _byte, us );
-            _listener->byteReceived( _byte );
+            if ( _listener )
+                _listener->byteReceived( _byte );
             _byte = 0;
             _state = wait_for_bit_signal;
         }
         // message ended if pause more than 4 units
         else if ( us > _unit_us * 4 ) {
             // Serial.printf( "done %02x %i\n", _byte, us );
-            _listener->byteReceived( _byte );
-            _listener->messageDone();
+            if ( _listener ) {
+                _listener->byteReceived( _byte );
+                _listener->messageDone();
+            }
             _byte = 0;
             _state = wait_for_bit_signal;
         }
@@ -60,8 +62,8 @@ void DataReceiver::pauseDetected( uint32_t us ) {
 }
 
 
-void DataReceiver::setListener( MessageInterpreter * _listener ) {
-    _listener = _listener;
+void DataReceiver::setListener( MessageInterpreter * listener ) {
+    _listener = listener;
 }
 
 } // namespace sen

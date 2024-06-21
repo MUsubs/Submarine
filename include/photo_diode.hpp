@@ -9,15 +9,16 @@ class DataReceiver;
 
 class PhotoDiode {
 public:
-    PhotoDiode( int pin, int poll_frequency, int max_pause_us );
+    PhotoDiode( int pin, int poll_frequency, int max_pause_us, int priority );
     void setListener( DataReceiver * listener );
-    void main();
+    void run();
+    static void staticRun( void * task_parameter );
 private:
     enum { wait_for_pause, wait_for_signal } _state = wait_for_pause;
     int _pin;
     int _wait_us;
     int _max_pause_us;
-    DataReceiver * _listener;
+    DataReceiver * _listener = nullptr;
 };
 
 } // namespace sen

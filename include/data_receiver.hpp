@@ -13,7 +13,7 @@ public:
     DataReceiver( int frequency );
     void signalDetected( uint32_t us );
     void pauseDetected( uint32_t us );
-    void setListener( MessageInterpreter * message_listener );
+    void setListener( MessageInterpreter * listener );
 private:
     enum {
         wait_for_bit_signal,

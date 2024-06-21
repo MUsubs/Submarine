@@ -27,6 +27,8 @@ private:
     stat_t state = IDLE;
     QueueHandle_t _packets_queue;
 
+    QueueHandle_t _message_done_queue;
+
     uint16_t readDataPackets( uint8_t &bytes_amount );
 
     void interpretHeader( sen::packet_t &type, sen::inst_t &instruction,

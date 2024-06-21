@@ -3,22 +3,24 @@
 
 #include <Arduino.h>
 #include <FreeRTOS.h>
+#include <task.h>
 
 namespace sen {
 
-PhotoDiode::PhotoDiode( int pin, int poll_frequency, int max_pause_polls ):
+PhotoDiode::PhotoDiode( int pin, int poll_frequency, int max_pause_polls, int priority ) :
     _pin( pin ),
     _wait_us( 1'000'000 / poll_frequency ),
     _max_pause_us( max_pause_polls*_wait_us )
 {
     pinMode( _pin, INPUT_PULLDOWN );
+    xTaskCreate( staticRun, "PHOTODIODE", 2048, this, priority, nullptr );
 }
 
 void PhotoDiode::setListener( DataReceiver * listener ) {
     _listener = listener;
 }
 
-void PhotoDiode::main( ) {
+void PhotoDiode::run( ) {
     uint32_t us = 0;
     int64_t wait_start;
     while ( true ) {
@@ -36,7 +38,8 @@ void PhotoDiode::main( ) {
             // if signal not is
             } else {
                 // send signal to listener and start waiting for signal
-                _listener->signalDetected( us );
+                if ( _listener )
+                    _listener->signalDetected( us );
                 us = 0;
                 _state = wait_for_signal;
             }
@@ -53,19 +56,27 @@ void PhotoDiode::main( ) {
                 us += _wait_us;
                 // if the pause exceeds max pause length, notify listener anyway
                 if ( us > _max_pause_us ) {
-                    _listener->pauseDetected( us );
+                    if ( _listener )
+                        _listener->pauseDetected( us );
                     us = 0;
                 }
             // if pause stopped (thus signal started)
             } else {
                 // notify listener of pause and start waiting for pause
-                _listener->pauseDetected( us );
+                if ( _listener )
+                    _listener->pauseDetected( us );
                 us = 0;
                 _state = wait_for_pause;
             }
             break;
         }
     }
+}
+
+
+void PhotoDiode::staticRun( void * task_parameter ) {
+    PhotoDiode * self = reinterpret_cast<PhotoDiode*>( task_parameter );
+    self->run();
 }
 
 } // namespace sen
