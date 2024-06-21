@@ -9,8 +9,9 @@
 #include <tuple>
 
 #include "FreeRTOS.h"
-#include "dummy_data_sender.hpp"
+#include "data_sender.hpp"
 #include "task.h"
+#include "packet_enums.h"
 
 namespace sen {
 
@@ -34,7 +35,7 @@ public:
      *
      * @param data_sender SEN wireless data transmission sender
      */
-    SerialControl( DummyDataSender& data_sender, int task_priority );
+    SerialControl( DataSender& data_sender, int task_priority );
 
     /**
      * @brief
@@ -75,7 +76,7 @@ public:
 
 private:
     std::queue<float> _measure_buffer;
-    DummyDataSender& _data_sender;
+    DataSender& _data_sender;
     xTaskHandle _this_task_handle;
 
     // IDLE is fully suspended, task activates with activate()

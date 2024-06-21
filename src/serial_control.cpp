@@ -1,10 +1,12 @@
 #include "serial_control.hpp"
 
+#define R2D2_DEBUG_ENABLE
+#include "r2d2_debug_macros.hpp"
 namespace sen {
 
 // PUBLIC
 
-SerialControl::SerialControl( DummyDataSender& data_sender, int task_priority ) :
+SerialControl::SerialControl( DataSender& data_sender, int task_priority ) :
     _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{}, _state{ state_t::IDLE } {
     xTaskCreate( staticRun, "SERIAL_CONTROL", 4000, this, task_priority, &_this_task_handle );
 }
@@ -89,7 +91,7 @@ void SerialControl::transmitMeasures() {
 }
 
 void SerialControl::sendPacket( const String& packet_string ) {
-    std::deque<uint8_t> bytes_2_send = {};
+    std::vector<uint8_t> bytes_2_send = {};
     std::tuple<std::array<String, 10>, int> command = extractCommand( packet_string );
     if ( std::get<1>( command ) == 0 || std::get<0>( command ).empty() ) {
         Serial.printf(
@@ -107,18 +109,18 @@ void SerialControl::sendPacket( const String& packet_string ) {
             bytes_2_send.emplace_back( _single_byte_commands[instruction_str] );
         } else {
             if ( instruction_str == "NEW_POS" ) {
-                instruction_type = NEW_POS;
+                instruction_type = inst_t::NEW_POS;
             } else {
                 Serial.printf( "==ERROR== invalid instruction '%s'\n", instruction_str.c_str() );
             }
-            bytes_2_send.emplace_back(
-                _data_sender.generateInstructionHeader( instruction_type, std::get<1>( command ) - 2 ) );
+            bytes_2_send.emplace_back( _data_sender.generateInstructionHeader(
+                instruction_type, std::get<1>( command ) - 2 ) );
         }
 
     } else if ( command_type == "UPDATE" ) {
         String data_str = std::get<0>( command )[1];
         data_t data_type;
-        if ( data_str == "CURR" ) data_type = CURR;
+        if ( data_str == "CURR" ) data_type = data_t::CURR;
         bytes_2_send.emplace_back(
             _data_sender.generateUpdateHeader( data_type, std::get<1>( command ) - 2 ) );
 
@@ -134,6 +136,10 @@ void SerialControl::sendPacket( const String& packet_string ) {
         uint8_t mapped_coord = std::min( map( coord.toFloat() * 100, 0, 100, 0, 255 ), (long)255 );
         Serial.printf( "==DEBUG== mapped coord = %d\n", mapped_coord );
         bytes_2_send.emplace_back( mapped_coord );
+    }
+    // TODO: BUGFIX, ALWAYS SENDS EVEN ON INVALID INSTRUCTION
+    for ( const auto& b : bytes_2_send ) {
+        R2D2_DEBUG_LOG("Byte to send: %d")
     }
     _data_sender.sendBytes( bytes_2_send );
 }
