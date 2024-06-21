@@ -113,6 +113,14 @@ class Server:
                         error = f"Temperature {temperature_value} error"
             return render_template('send_current_location.html', x=x, y=y, z=z)
 
+        @self.app.route('/temperatures')
+        def temperatures():
+            db = get_db()
+            temperatures = db.execute(
+                'SELECT temperature_value FROM temperature'
+            ).fetchall()
+            return render_template('temperatures.html', temperatures=temperatures)
+
     
     def run(self, debug=True, use_reloader=False):
         self.app.run(debug=debug, use_reloader=use_reloader)
