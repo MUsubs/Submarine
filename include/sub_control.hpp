@@ -1,8 +1,11 @@
 #ifndef R2D2_SUB_CONTROL_HPP
 #define R2D2_SUB_CONTROL_HPP
 
+#define R2D2_DEBUG_ENABLE
+
 #include <FreeRTOS.h>
 #include <queue.h>
+#include <semphr.h>
 #include <task.h>
 
 #include <array>
@@ -11,6 +14,7 @@
 #include "dummy_sen_types.hpp"
 #include "dummy_thermo_sensor.hpp"
 #include "dummy_travel_control.hpp"
+#include "r2d2_debug_macros.hpp"
 
 namespace sen {
 
@@ -18,14 +22,15 @@ class SubControl {
 public:
     SubControl(
         DummyTravelControl& travel_control, DummyDataSender& data_sender,
-        DummyThermoSensor& thermo_sensor );
+        DummyThermoSensor& thermo_sensor, int task_priority );
     void activate();
     void deactivate();
 
-    void receivedINST( inst_t inst_type, std::array<uint8_t, 10>& data );
+    void receivedINST( inst_t inst_type );
+    void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data );
     void receivedINST( InstPacket_t& inst_p );
 
-    void receivedUPDATE( data_t data_type, std::array<uint8_t, 10>& data );
+    void receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data );
     void receivedUPDATE( UpdatePacket_t& update_p );
 
 private:

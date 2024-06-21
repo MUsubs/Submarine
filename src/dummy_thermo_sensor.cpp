@@ -6,7 +6,7 @@ DummyThermoSensor::DummyThermoSensor() {
 }
 
 float DummyThermoSensor::getTemperature() {
-    return 10.0f;
+    return 69.42f;
 }
 
 }
