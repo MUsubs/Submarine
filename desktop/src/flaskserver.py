@@ -7,7 +7,7 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'include'))
 from SerialControl import SerialControl
 from db import get_db, close_db, init_db, init_db_command, init_app
-
+COM_PORT = 8
 # PLACEHOLDER FUNCTION
 def read_current_location():
     return 0.1, 0.2, 0.3
@@ -31,6 +31,10 @@ class Server:
         self.server_serial = SerialControl()
         if clear_database:
             init_app(self.app, True)
+        # Set these values to None as soon as real data should be used instead of testing data
+        self.current_target_x = 0.1
+        self.current_target_y = 0.2
+        self.current_target_z = 0.3
 
 
     def configure_routes(self):
@@ -69,28 +73,21 @@ class Server:
                     (coord[0], coord[1], coord[2]),
                 )   
                          db.commit()  
-                         print("Values inserted into database")
+                         print(f"Values X={coord[0]},Y={coord[1]},Z={coord[2]} inserted into database")
                     except db.IntegrityError:
                         error = f"Coordinates {coord[0], coord[1], coord[2]} error"
                     x, y, z = read_current_location()
-                    self.server_serial.send_serial(f"UPDATE,CURR,X={x},Y={y},Z={z}", 8)
-                    
-                    server_response, serial_return = self.server_serial.send_serial(f'INST,NEW_POS,X={coord[0]},Y={coord[1]},Z={coord[2]}', 8)
+                    # Comment this back in to set the target coordinates to the given coordinates
+                    # self.current_target_x = coord[0]
+                    # self.current_target_y = coord[1]
+                    # self.current_target_z = coord[2]
+                    self.server_serial.send_serial(f"UPDATE,CURR,X={x},Y={y},Z={z}", COM_PORT)
+                    # Remove this sleep when parsing with \n is fixed to improve speed
+                    time.sleep(1)
+                    server_response, serial_return = self.server_serial.send_serial(f'INST,NEW_POS,X={coord[0]},Y={coord[1]},Z={coord[2]}', COM_PORT, True)
                     response_command, _, _ = self.server_serial.parse_response(server_response)
-                    print(response_command)
+                    print(f"Response command: {response_command}")
 
-                    # Everything in the while loop is for future use
-                    while (serial_return != 0 or response_command != "INST_ACK"):
-                        print("IN WHILE")
-                        server_response, serial_return = self.server_serial.read_serial(8)
-                        print(f"SERVER RESPONSE IF: {server_response}")
-                        response_command, _, _ = self.server_serial.parse_response(server_response)
-                        if response_command == "INST_ACK":
-                            print("I GOT THAT DAWG IN ME (ACK received)")
-                            break
-                            #return redirect(url_for('send_current_location'))
-                        else:
-                            print("In else statement thingy")
                 return redirect(url_for('send_current_location'))
             
             return render_template('input_coordinates.html', num_values=num_values)
@@ -111,13 +108,23 @@ class Server:
         
         @self.app.route('/send_current_location')
         def send_current_location():
+            print("Sending current location")
             x, y, z = read_current_location()
-            serial_response = self.server_serial.send_serial(f"UPDATE,CURR,X{x},Y{y},Z{z}", 8)
-            if serial_response != 0:
+            self.server_serial.send_serial(f"UPDATE,CURR,X{x},Y{y},Z{z}", COM_PORT)
+            serial_response = 0
+            if (self.current_target_x == x and self.current_target_y == y and self.current_target_z == z):
+                # Remove this sleep when parsing with \n is fixed to improve speed
+                time.sleep(1)
+                serial_response = self.server_serial.send_serial(f"INST,ARRIVED", COM_PORT, True)    
+            print(f"Serial Response before if statement {serial_response}")
+            if serial_response[0].startswith("INST,ACK,SENS,TEMP"):
                 db = get_db()
+                #serial_response = self.server_serial.read_serial(COM_PORT)
+                print(f"Serial Response after ACK: {serial_response}")
                 response_command, temperature_value, error_code = self.server_serial.parse_response(serial_response)
                 if temperature_value != None:
                     try:
+                        print(f"Writing temperature value {temperature_value} to database.")
                         db.execute(
                     "INSERT INTO temperature (temperature_value) VALUES (?)",
                     (temperature_value,),
