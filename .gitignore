@@ -574,12 +574,12 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
-.vscode
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.code-workspace
 *.code-workspace
 .clang-format
 
@@ -665,9 +665,3 @@ avr-toolchain-*.zip
 /app/nbproject/private/
 /arduino-core/nbproject/private/
 /app/build/
-/arduino-core/build/
-
-manifest.mf
-nbbuild.xml
-nbproject
-*.ino
