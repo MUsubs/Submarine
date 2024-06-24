@@ -113,7 +113,7 @@ class Tracking:
                            metrics=['accuracy'])
 
     def train_model(self, images_train, images_val, boxes_train, boxes_val):
-        self.model.fit(images_train, boxes_train, epochs=5, 
+        self.model.fit(images_train, boxes_train, epochs=epochs, 
                        validation_data=(images_val, boxes_val))
 
     def predict_bounding_box(self, img):
@@ -155,14 +155,14 @@ if __name__ == "__main__":
     image_dir = "data/traindata"
     json_path = "data/validatiedata/combined.json"
     scaler = 64
-    
+    epochs = 256
     tracking = Tracking(image_dir, json_path, scaler)
     images_train, images_val, boxes_train, boxes_val = tracking.preprocess_data()
     tracking.build_model()
     tracking.train_model(images_train, images_val, boxes_train, boxes_val)
     
     # Choose 8 random image paths
-    random_image_paths = random.sample(os.listdir(image_dir), 8)
+    random_image_paths = random.sample(os.listdir(image_dir), 50)
     random_image_paths = [os.path.join(image_dir, img_path) for img_path in random_image_paths if img_path.endswith('.jpg')]
     
     for img_path in random_image_paths:
@@ -176,10 +176,17 @@ if __name__ == "__main__":
             
             # Draw predicted bounding box (blue)
             img_with_predicted_box = tracking.draw_bounding_box(img_with_actual_box, predicted_box, (0, 0, 255))
-            print("Predicted box: ", predicted_box)
-            print("Actual box: ", actual_box)
-            # Display the image with both boxes
+            
+            # Display the image with both boxes and legend
             plt.imshow(cv2.cvtColor(img_with_predicted_box, cv2.COLOR_BGR2RGB))
+            
+            # Create legend
+            actual_patch = plt.Line2D([0], [0], color='g', linewidth=2, label='Actual Box')
+            predicted_patch = plt.Line2D([0], [0], color='r', linewidth=2, label='Predicted Box')
+            
+            # Add legend to the plot
+            plt.legend(handles=[actual_patch, predicted_patch], loc='lower right')
+            
             plt.axis('off')
             plt.show()
         else:
