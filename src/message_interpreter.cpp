@@ -1,5 +1,8 @@
 #include "message_interpreter.hpp"
 
+#define R2D2_DEBUG_ENABLE
+#include "r2d2_debug_macros.hpp"
+
 namespace sen {
 
 MessageInterpreter::MessageInterpreter( int queue_length ) :
@@ -8,12 +11,12 @@ MessageInterpreter::MessageInterpreter( int queue_length ) :
 }
 
 void MessageInterpreter::byteReceived( uint8_t msg ) {
-    Serial.printf( "received %02x\n", msg );
+    R2D2_DEBUG_LOG( "received %#02x\n", msg );
     xQueueSend( _packets_queue, &msg, 0 );
 }
 
 void MessageInterpreter::messageDone() {
-    Serial.printf( "done\n" );
+    R2D2_DEBUG_LOG( "message done\n" );
     uint8_t msg = 1;
     xQueueSend( _message_done_queue, &msg, 0 );
 }
