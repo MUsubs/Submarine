@@ -72,8 +72,8 @@ class Tracking:
             layers.MaxPooling2D((pool_size, pool_size)),
             layers.Conv2D(num_filters, (filter_size, filter_size), activation='relu'),
             layers.Flatten(),
-            layers.Dense(64, activation='relu'),
-            layers.Dense(4)  # 4 outputs for bounding box coordinates (x, y, w, h)
+            layers.Dense(128, activation='relu'),
+            layers.Dense(4)
         ])
 
         self.model.compile(optimizer='adam',
