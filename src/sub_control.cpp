@@ -23,11 +23,11 @@ void SubControl::deactivate() {
     _state = state_t::IDLE;
 }
 
-void SubControl::receivedINST( inst_t inst_type ) {
-    R2D2_DEBUG_LOG( "Received Instruction of type %d", (int)inst_type );
-    InstPacket_t inst_packet;
-    inst_packet.inst_type = inst_type;
-    xQueueSend( _inst_queue, (void*)&inst_packet, 0 );
+void SubControl::receivedINST( InstPacket_t& inst_p ) {
+    R2D2_DEBUG_LOG(
+        "Received Instruction of type %d, with %d arguments", (int)inst_p.inst_type,
+        inst_p.data_bytes.size() );
+    xQueueSend( _inst_queue, (void*)&inst_p, 0 );
 }
 
 void SubControl::receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data ) {
@@ -37,17 +37,11 @@ void SubControl::receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data ) 
     xQueueSend( _inst_queue, (void*)&inst_packet, 0 );
 }
 
-void SubControl::receivedINST( InstPacket_t& inst_p ) {
-    R2D2_DEBUG_LOG(
-        "Received Instruction of type %d, with %d arguments", (int)inst_p.inst_type,
-        inst_p.data_bytes.size() );
-    xQueueSend( _inst_queue, (void*)&inst_p, 0 );
-}
-
-void SubControl::receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data ) {
-    R2D2_DEBUG_LOG( "Received Update of type %d, with %d arguments", (int)data_type, data.size() );
-    UpdatePacket_t update_packet{ data_type, data };
-    xQueueSend( _update_queue, (void*)&update_packet, 0 );
+void SubControl::receivedINST( inst_t inst_type ) {
+    R2D2_DEBUG_LOG( "Received Instruction of type %d", (int)inst_type );
+    InstPacket_t inst_packet;
+    inst_packet.inst_type = inst_type;
+    xQueueSend( _inst_queue, (void*)&inst_packet, 0 );
 }
 
 void SubControl::receivedUPDATE( UpdatePacket_t& update_p ) {
@@ -55,6 +49,12 @@ void SubControl::receivedUPDATE( UpdatePacket_t& update_p ) {
         "Received Update of type %d, with %d arguments", (int)update_p.data_type,
         update_p.data_bytes.size() );
     xQueueSend( _update_queue, (void*)&update_p, 0 );
+}
+
+void SubControl::receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data ) {
+    R2D2_DEBUG_LOG( "Received Update of type %d, with %d arguments", (int)data_type, data.size() );
+    UpdatePacket_t update_packet{ data_type, data };
+    xQueueSend( _update_queue, (void*)&update_packet, 0 );
 }
 
 void SubControl::run() {

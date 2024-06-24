@@ -671,3 +671,8 @@ manifest.mf
 nbbuild.xml
 nbproject
 *.ino
+
+# DOXYGEN
+
+html/
+latex/
