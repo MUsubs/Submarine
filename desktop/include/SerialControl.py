@@ -92,12 +92,19 @@ class SerialControl:
         try:
             if response == "INST,STOP":
                 return "INST_STOP", None, 0
-            elif response == "INST,ACK":
+            elif response == "INST,ACK\n":
                 return "INST_ACK", None, 0
             elif isinstance(response, tuple):
                if response[0].startswith("INST,ACK,SENS,TEMP"):
                     try:
                         temp = float(response[0].split(',')[4])
+                        return "TEMP", temp, 0
+                    except (IndexError, ValueError) as e:
+                        print(f"Error parsing SENS,TEMP: {e}")
+                        return "ERROR", None, -1
+               elif response[0].startswith("SENS,TEMP"):
+                    try:
+                        temp = float(response[0].split(',')[2])
                         return "TEMP", temp, 0
                     except (IndexError, ValueError) as e:
                         print(f"Error parsing SENS,TEMP: {e}")

@@ -31,7 +31,7 @@ void SerialControl::clearMeasurements() {
     std::swap( _measure_buffer, empty_buffer );
 }
 
-void SerialControl::addMeasure( const float& measure ) {
+void SerialControl::addMeasure( float measure ) {
     _measure_buffer.emplace( measure );
 }
 
@@ -75,7 +75,7 @@ void SerialControl::run( void* pvParameters ) {
                 sendPacket( serial_data );
                 _state = state_t::READING;
                 break;
-            
+
             case state_t::SERIAL_ACK:
                 transmitACK();
                 _state = state_t::READING;
@@ -95,34 +95,42 @@ void SerialControl::staticRun( void* pvParameters ) {
 }
 
 void SerialControl::transmitMeasures() {
-    // Serial.printf( "==INFO== Transmitting, measure_buffer has %d items\n", _measure_buffer.size() );
     for ( ; !_measure_buffer.empty(); _measure_buffer.pop() ) {
         Serial.printf( "SENS,TEMP,%f\n", _measure_buffer.front() );
     }
 }
 
 void SerialControl::transmitACK() {
-    Serial.printf("INST,ACK\n");
+    Serial.printf( "INST,ACK\n" );
 }
 
 // IR Transmission
 void SerialControl::sendPacket( const String& packet_string ) {
+    bool b_send = false;
     std::vector<uint8_t> bytes_2_send = {};
     std::tuple<std::array<String, 10>, int> command = extractCommand( packet_string );
-    if ( std::get<1>( command ) == 0 || std::get<0>( command ).empty() ) {
-        // Serial.printf(
-            // "==ERROR== invalid command '%s' with length 0 in "
-            // "SerialControl::sendPacket() @serial_control.cpp:%d\n",
-            // std::get<0>( command )[0], __LINE__ );
+    std::array<String, 10>& data_arr = std::get<0>( command );
+    int n_data = 0;
+    for ( const auto& item : data_arr ) {
+        if ( item == "" ) break;
+        n_data++;
+    }
+    if ( std::get<1>( command ) == 0 || data_arr.empty() ) {
+        Serial.printf(
+            "==ERROR== invalid command '%s' with length 0 in "
+            "SerialControl::sendPacket() @serial_control.cpp:%d\n",
+            data_arr[0], __LINE__ );
         return;
     }
-    String command_type = std::get<0>( command )[0];
+    String command_type = data_arr[0];
     if ( command_type == "INST" ) {
-        String instruction_str = std::get<0>( command )[1];
+        if ( n_data <= 1 ) return;
+        String instruction_str = data_arr[1];
         inst_t instruction_type;
 
         if ( _single_byte_commands.find( instruction_str ) != _single_byte_commands.end() ) {
             bytes_2_send.emplace_back( _single_byte_commands[instruction_str] );
+            b_send = true;
         } else {
             if ( instruction_str == "NEW_POS" ) {
                 instruction_type = inst_t::NEW_POS;
@@ -131,14 +139,16 @@ void SerialControl::sendPacket( const String& packet_string ) {
             }
             bytes_2_send.emplace_back( _data_sender.generateInstructionHeader(
                 instruction_type, std::get<1>( command ) - 2 ) );
+            b_send = true;
         }
 
     } else if ( command_type == "UPDATE" ) {
-        String data_str = std::get<0>( command )[1];
+        String data_str = data_arr[1];
         data_t data_type;
         if ( data_str == "CURR" ) data_type = data_t::CURR;
         bytes_2_send.emplace_back(
             _data_sender.generateUpdateHeader( data_type, std::get<1>( command ) - 2 ) );
+        b_send = true;
 
     } else {
         return;
@@ -146,7 +156,7 @@ void SerialControl::sendPacket( const String& packet_string ) {
 
     String coord;
     for ( int i = 2; i < std::get<1>( command ); i++ ) {
-        coord = std::get<0>( command )[i];
+        coord = data_arr[i];
         coord = coord.substring( coord.indexOf( '=' ) + 1 );
         // Serial.printf( "==DEBUG== coord substring = %s\n", coord.c_str() );
         uint8_t mapped_coord = std::min( map( coord.toFloat() * 100, 0, 100, 0, 255 ), (long)255 );
@@ -155,9 +165,9 @@ void SerialControl::sendPacket( const String& packet_string ) {
     }
     // TODO: BUGFIX, ALWAYS SENDS EVEN ON INVALID INSTRUCTION
     for ( const uint8_t& b : bytes_2_send ) {
-        R2D2_DEBUG_LOG("Byte to send: %#02x", b);
+        R2D2_DEBUG_LOG( "Byte to send: %#02x", b );
     }
-    _data_sender.sendBytes( bytes_2_send );
+    if ( b_send ) _data_sender.sendBytes( bytes_2_send );
 }
 
 std::tuple<std::array<String, 10>, int> SerialControl::extractCommand( const String& input ) {
@@ -183,13 +193,10 @@ std::tuple<std::array<String, 10>, int> SerialControl::extractCommand( const Str
 }
 
 String SerialControl::readSerialString() {
-    digitalWrite( LED_BUILTIN, HIGH );
     if ( Serial.available() > 0 ) {
-        digitalWrite( LED_BUILTIN, LOW );
         String result = Serial.readString();
         result.trim();
         result.replace( "\b", "" );
-        // Serial.printf( "INCOMING SERIAL STRING: '%s'\n", result.c_str() );
         return result;
     }
     return "";

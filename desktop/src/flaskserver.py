@@ -7,7 +7,7 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'include'))
 from SerialControl import SerialControl
 from db import get_db, close_db, init_db, init_db_command, init_app
-COM_PORT = 8
+COM_PORT = 9
 # PLACEHOLDER FUNCTION
 def read_current_location():
     return 0.1, 0.2, 0.3
@@ -32,7 +32,7 @@ class Server:
         if clear_database:
             init_app(self.app, True)
         # Set these values to None as soon as real data should be used instead of testing data
-        self.current_target_x = 0.1
+        self.current_target_x = 0.2
         self.current_target_y = 0.2
         self.current_target_z = 0.3
 
@@ -81,9 +81,10 @@ class Server:
                     # self.current_target_x = coord[0]
                     # self.current_target_y = coord[1]
                     # self.current_target_z = coord[2]
+                    
+                    # Send primary location update
                     self.server_serial.send_serial(f"UPDATE,CURR,X={x},Y={y},Z={z}", COM_PORT)
-                    # Remove this sleep when parsing with \n is fixed to improve speed
-                    time.sleep(1)
+                    # Send new target position
                     server_response, serial_return = self.server_serial.send_serial(f'INST,NEW_POS,X={coord[0]},Y={coord[1]},Z={coord[2]}', COM_PORT, True)
                     response_command, _, _ = self.server_serial.parse_response(server_response)
                     print(f"Response command: {response_command}")
@@ -110,31 +111,52 @@ class Server:
         def send_current_location():
             print("Sending current location")
             x, y, z = read_current_location()
-            self.server_serial.send_serial(f"UPDATE,CURR,X{x},Y{y},Z{z}", COM_PORT)
             serial_response = 0
-            if (self.current_target_x == x and self.current_target_y == y and self.current_target_z == z):
-                # Remove this sleep when parsing with \n is fixed to improve speed
-                time.sleep(1)
-                serial_response = self.server_serial.send_serial(f"INST,ARRIVED", COM_PORT, True)    
-            print(f"Serial Response before if statement {serial_response}")
-            if serial_response[0].startswith("INST,ACK,SENS,TEMP"):
-                db = get_db()
-                #serial_response = self.server_serial.read_serial(COM_PORT)
-                print(f"Serial Response after ACK: {serial_response}")
-                response_command, temperature_value, error_code = self.server_serial.parse_response(serial_response)
-                if temperature_value != None:
-                    try:
-                        print(f"Writing temperature value {temperature_value} to database.")
-                        db.execute(
-                    "INSERT INTO temperature (temperature_value) VALUES (?)",
-                    (temperature_value,),
-                    )   
-                        db.commit()  
-                        print("Values inserted into database")
-                    except db.IntegrityError:
-                            error = f"Temperature {temperature_value} error"
-                else:
-                    print(f"Serial response not a temperature value. Response command:{response_command}, Temperature value:{temperature_value}, Error code:{error_code}")
+            serial_message_regular = f"UPDATE,CURR,X={x},Y={y},Z={z}"
+            serial_message_arrived = f"INST,ARRIVED"
+            
+            # Quick sub-method to check if the current location is the same as the target location
+            def ARRIVED():
+                return (self.current_target_x == x and self.current_target_y == y and self.current_target_z == z)
+            # Send update or send update + arrived flag
+            if ARRIVED():
+                self.server_serial.send_serial(serial_message_regular, COM_PORT)
+                serial_response, _ = self.server_serial.send_serial(serial_message_arrived, COM_PORT, send_and_read=True)
+                print(f"Serial response after sending INST,ARRIVED: {serial_response}") 
+            else: 
+                # Wait until the submarine has arrived at the target location
+                while(True):
+                    x, y, z = read_current_location()
+                    self.server_serial.send_serial(serial_message_regular, COM_PORT)
+                    if ARRIVED():
+                        serial_response, _ = self.server_serial.send_serial(serial_message_arrived, COM_PORT, send_and_read=True)
+                        print(f"Serial response after sending INST,ARRIVED: {serial_response}") 
+                        break
+                    time.sleep(0.25)
+
+            if serial_response == "INST,ACK\n":
+                # Let serial recipient know the server is ready for temperature data
+                serial_response = self.server_serial.send_serial("TRANSMIT", COM_PORT, send_and_read=True)   
+                # If the received response is a temperature value, check it and write to database
+                if serial_response[0].startswith("INST,ACK,SENS,TEMP") or serial_response[0].startswith("SENS,TEMP"):
+                    db = get_db()
+                    print(f"Serial Response after ACK: {serial_response}")
+                    response_command, temperature_value, error_code = self.server_serial.parse_response(serial_response)
+                    if temperature_value != None:
+                        try:
+                            print(f"Writing temperature value: {temperature_value} to database and sending SERIAL ACK.")
+                            self.server_serial.send_serial("INST,ACK", COM_PORT)
+                            db.execute(
+                        "INSERT INTO temperature (temperature_value) VALUES (?)",
+                        (temperature_value,),
+                        )   
+                            db.commit()  
+                            print(f"Value {temperature_value} inserted into database")
+                        except db.IntegrityError:
+                                error = f"Temperature {temperature_value} error"
+                                print(error)
+                    else:
+                        print(f"Serial response not a temperature value. Response command:{response_command}, Temperature value:{temperature_value}, Error code:{error_code}")
             return render_template('send_current_location.html', x=x, y=y, z=z)
 
         @self.app.route('/temperatures')

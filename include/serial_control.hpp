@@ -65,7 +65,7 @@ public:
      *
      * @param measure measurement to store in float format
      */
-    void addMeasure( const float& measure );
+    void addMeasure( float measure );
 
     /**
      * @brief Get the Measurement Count of measurement buffer

@@ -23,7 +23,6 @@ void DataSender::run() {
     while ( true ) {
         uint8_t byte;
         xQueueReceive( _byte_queue, &byte, portMAX_DELAY );
-        R2D2_DEBUG_LOG( "DataSender - Sending byte %02x", byte );
         for ( int i = 0; i < 8; i++ ) {
             // write 38kHz signal for 1 or .5 _unit_us, depending on if bit is 1 or 0
             analogWrite( _led_pin, 127 );
