@@ -67,11 +67,20 @@ class Tracking:
 
         self.model = models.Sequential([
             layers.Conv2D(num_filters, (filter_size, filter_size), activation='relu', input_shape=(self.scaler, self.scaler, 3)),
+            layers.BatchNormalization(),
             layers.MaxPooling2D((pool_size, pool_size)),
-            layers.Conv2D(num_filters, (filter_size, filter_size), activation='relu'),
+            layers.Conv2D(64, (filter_size, filter_size), activation='relu'),
+            layers.BatchNormalization(),
             layers.MaxPooling2D((pool_size, pool_size)),
-            layers.Conv2D(num_filters, (filter_size, filter_size), activation='relu'),
+            layers.Conv2D(128, (filter_size, filter_size), activation='relu'),
+            layers.BatchNormalization(),
+            layers.MaxPooling2D((pool_size, pool_size)),
+            layers.Conv2D(256, (filter_size, filter_size), activation='relu'),
+            layers.BatchNormalization(),
+            layers.MaxPooling2D((pool_size, pool_size)),
             layers.Flatten(),
+            layers.Dense(128, activation='relu'),
+            layers.Dropout(0.5),
             layers.Dense(64, activation='relu'),
             layers.Dense(4)  # 4 outputs for bounding box coordinates (x, y, w, h)
         ])
@@ -81,7 +90,7 @@ class Tracking:
                            metrics=['accuracy'])
 
     def train_model(self, images_train, images_val, boxes_train, boxes_val):
-        self.model.fit(images_train, boxes_train, epochs=5, 
+        self.model.fit(images_train, boxes_train, epochs=30, 
                        validation_data=(images_val, boxes_val))
 
     def predict_bounding_box(self, img):
@@ -126,10 +135,10 @@ class Tracking:
             print(f"No coordinates found for frame {frame_name}")
 
 if __name__ == "__main__":
-    image_dir = 'data/traindata'
     json_path = 'data/validatiedata/combined.json'
     scaler = 256
 
+    image_dir = 'data/traindata'
     tracking = Tracking(image_dir, json_path, scaler)
     images_train, images_val, boxes_train, boxes_val = tracking.preprocess_data()
     tracking.build_model()
