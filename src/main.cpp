@@ -4,14 +4,13 @@
 #include "photo_diode.hpp"
 #include "serial_control.hpp"
 
-#define R2D2_DEBUG_ENABLE
-
 #include <Arduino.h>
-const int frequency = 30;
 
-sen::DataSender sender( 22, frequency, 32, 2 );
-sen::SerialControl serial_control{ sender, 2 };
-sen::PhotoDiode diode( 26, frequency * 20, 20 * 4 * 2, 2 );
+const int frequency = 40;
+
+sen::DataSender sender( 22, frequency, 32, 1 );
+sen::SerialControl serial_control{ sender, 1 };
+sen::PhotoDiode diode( 26, frequency * 16, 20 * 4 * 2, 1 );
 sen::DataReceiver receiver( frequency );
 sen::MessageInterpreter interpreter( 32 );
 
@@ -19,10 +18,10 @@ void setup() {
     pinMode( LED_BUILTIN, OUTPUT );
     Serial.begin( 9600 );
     while ( !Serial );
-    vTaskDelay( 2000 );
-    serial_control.activate();
+    vTaskDelay( 1000 );
     diode.setListener( &receiver );
     receiver.setListener( &interpreter );
+    serial_control.activate();
 }
 
 void loop() {
@@ -33,7 +32,7 @@ void loop() {
         serial_control.addMeasure( 30 );
         serial_control.addMeasure( 40 );
     }
-    // sender.sendBytes({5, 6, 7});
-    // vTaskDelay(2000);
+    // sender.sendBytes({0x54, 0x55, 0x56});
+    delay(500);
     taskYIELD();
 }

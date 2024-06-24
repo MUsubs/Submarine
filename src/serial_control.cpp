@@ -42,6 +42,7 @@ int SerialControl::getMeasurementCount() {
 void SerialControl::run( void* pvParameters ) {
     String serial_data;
     for ( ;; ) {
+        delay(100);
         // 0 = IDLE, 1 = READING, 2 = TRANSMIT, 3 = DATA_SEND
         switch ( _state ) {
             case state_t::IDLE:
@@ -104,7 +105,7 @@ void SerialControl::sendPacket( const String& packet_string ) {
     if ( command_type == "INST" ) {
         String instruction_str = std::get<0>( command )[1];
         inst_t instruction_type;
-
+        
         if ( _single_byte_commands.find( instruction_str ) != _single_byte_commands.end() ) {
             bytes_2_send.emplace_back( _single_byte_commands[instruction_str] );
         } else {
@@ -146,15 +147,15 @@ void SerialControl::sendPacket( const String& packet_string ) {
 
 std::tuple<std::array<String, 10>, int> SerialControl::extractCommand( const String& input ) {
     std::array<String, 10> args;
+    
     int from_index = 0;
     int comma_index = input.indexOf( ',', from_index );
     for ( int i = 0; i < 10; i++ ) {
         if ( comma_index == -1 ) {
             args[i] = input.substring( from_index );
-            Serial.println( "Extracted command:" );
-            for ( int j = 0; j < 10; j++ ) {
-                if ( args[j] == "" ) break;
-                Serial.printf( "%d : %s\n", j, args[j].c_str() );
+            Serial.printf( "Extracted %i commands:\n", i+1 );
+            for ( int j = 0; j < i + 1; j++ ) {
+                Serial.printf( "  %d : %s\n", j, args[j].c_str() );
             }
             return std::tuple<std::array<String, 10>, int>{ args, i + 1 };
         }
