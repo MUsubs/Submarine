@@ -12,6 +12,7 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
+
 # Paden naar de data
 image_dir = 'dataset'  # Pad naar de map met jpg-afbeeldingen
 json_path = 'combined.json'  # Pad naar het JSON-bestand met annotaties

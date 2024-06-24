@@ -1,3 +1,4 @@
+#tracker.py
 import os
 import json
 import numpy as np
@@ -32,9 +33,9 @@ class Tracking:
     def load_data(self):
         """
         Load images and their corresponding bounding boxes from the directory and JSON data.
-        boxes = []
         """
         images = []
+        boxes = []
         for filename in os.listdir(self.image_dir):
             if filename.endswith('.jpg'):
                 img_path = os.path.join(self.image_dir, filename)
