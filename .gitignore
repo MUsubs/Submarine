@@ -594,3 +594,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+
+data/
+dataset_comb/
+dataset_new/
