@@ -10,11 +10,10 @@
 
 #include <array>
 
-#include "dummy_data_sender.hpp"
-#include "dummy_sen_types.hpp"
+#include "data_transceiver.hpp"
 #include "dummy_thermo_sensor.hpp"
-#include "travel_control.hpp"
 #include "r2d2_debug_macros.hpp"
+#include "travel_control.hpp"
 
 namespace sen {
 
@@ -33,100 +32,101 @@ namespace sen {
  * Travel and receive updates, Measure and send measurement)
  */
 class SubControl {
- public:
-  /**
-   * @brief Construct a new SubControl object
-   *
-   * @param travel_control Reference to TravelControl instance
-   * @param data_sender Reference to DataSender instance
-   * @param thermo_sensor Reference to ThermoSensor instance
-   * @param task_priority FreeRTOS priority
-   */
-  SubControl(asn::TravelControl& travel_control, DummyDataSender& data_sender,
-             DummyThermoSensor& thermo_sensor, int task_priority);
+public:
+    /**
+     * @brief Construct a new SubControl object
+     *
+     * @param travel_control Reference to TravelControl instance
+     * @param data_sender Reference to DataSender instance
+     * @param thermo_sensor Reference to ThermoSensor instance
+     * @param task_priority FreeRTOS priority
+     */
+    SubControl(
+        asn::TravelControl& travel_control, DataTransceiver& data_sender, DummyThermoSensor& thermo_sensor,
+        int task_priority );
 
-  /**
-   * @brief
-   * Activate SubControl task, put instance into READING state
-   * resuming FreeRTOS task
-   */
-  void activate();
+    /**
+     * @brief
+     * Activate SubControl task, put instance into READING state
+     * resuming FreeRTOS task
+     */
+    void activate();
 
-  /**
-   * @brief
-   * Deactivate SubControl task, put instance into IDLE state
-   * suspending FreeRTOS task
-   */
-  void deactivate();
+    /**
+     * @brief
+     * Deactivate SubControl task, put instance into IDLE state
+     * suspending FreeRTOS task
+     */
+    void deactivate();
 
-  /**
-   * @name receivedINST Functions
-   * @{
-   */
+    /**
+     * @name receivedINST Functions
+     * @{
+     */
 
-  /**
-   * @fn void receivedINST( InstPacket_t& inst_p )
-   * @brief Notify of received Instruction
-   *
-   * @param inst_p Instruction Packet with type and data
-   */
-  void receivedINST(InstPacket_t& inst_p);
+    /**
+     * @fn void receivedINST( InstPacket_t& inst_p )
+     * @brief Notify of received Instruction
+     *
+     * @param inst_p Instruction Packet with type and data
+     */
+    void receivedINST( InstPacket_t& inst_p );
 
-  /**
-   * @overload
-   *
-   * @param inst_type Type of instruction
-   * @param data Data associated with instruction arguments
-   */
-  void receivedINST(inst_t inst_type, std::array<uint8_t, 3>& data);
+    /**
+     * @overload
+     *
+     * @param inst_type Type of instruction
+     * @param data Data associated with instruction arguments
+     */
+    void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data );
 
-  /**
-   * @overload
-   * @brief Single Byte instruction variant
-   *
-   * @param inst_type Type of instruction
-   */
-  void receivedINST(inst_t inst_type);
+    /**
+     * @overload
+     * @brief Single Byte instruction variant
+     *
+     * @param inst_type Type of instruction
+     */
+    void receivedINST( inst_t inst_type );
 
-  /** @} */
+    /** @} */
 
-  /**
-   * @name receivedUPDATE Functions
-   * @{
-   */
+    /**
+     * @name receivedUPDATE Functions
+     * @{
+     */
 
-  /**
-   * @fn void receivedUPDATE( UpdatePacket_t& update_p )
-   * @brief Notify of received Update
-   *
-   * @param update_p Update Packet with type and data
-   */
-  void receivedUPDATE(UpdatePacket_t& update_p);
+    /**
+     * @fn void receivedUPDATE( UpdatePacket_t& update_p )
+     * @brief Notify of received Update
+     *
+     * @param update_p Update Packet with type and data
+     */
+    void receivedUPDATE( UpdatePacket_t& update_p );
 
-  /**
-   * @overload
-   *
-   * @param data_type Data field to update
-   * @param data Data associated with update arguments
-   */
-  void receivedUPDATE(data_t data_type, std::array<uint8_t, 3>& data);
+    /**
+     * @overload
+     *
+     * @param data_type Data field to update
+     * @param data Data associated with update arguments
+     */
+    void receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data );
 
-  /** @} */
+    /** @} */
 
- private:
-  asn::TravelControl& _travel_control;
-  DummyDataSender& _data_sender;
-  DummyThermoSensor& _thermo_sensor;
+private:
+    asn::TravelControl& _travel_control;
+    DataTransceiver& _data_sender;
+    DummyThermoSensor& _thermo_sensor;
 
-  xTaskHandle _this_task_handle;
-  xQueueHandle _inst_queue;
-  xQueueHandle _update_queue;
+    xTaskHandle _this_task_handle;
+    xQueueHandle _inst_queue;
+    xQueueHandle _update_queue;
 
-  enum class state_t { IDLE, INST, TRAVEL, SENS, WAIT_ACK };
-  state_t _state = state_t::IDLE;
+    enum class state_t { IDLE, INST, TRAVEL, SENS, WAIT_ACK };
+    state_t _state = state_t::IDLE;
 
-  void run();
-  static void staticRun(void* pvParameters);
+    void run();
+    static void staticRun( void* pvParameters );
 };
 
 }  // namespace sen

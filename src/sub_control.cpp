@@ -3,7 +3,7 @@
 namespace sen {
 
 SubControl::SubControl(
-    asn::TravelControl& travel_control, DummyDataSender& data_sender, DummyThermoSensor& thermo_sensor,
+    asn::TravelControl& travel_control, DataTransceiver& data_sender, DummyThermoSensor& thermo_sensor,
     int task_priority ) :
     _travel_control{ travel_control }, _data_sender{ data_sender }, _thermo_sensor( thermo_sensor ),
     _this_task_handle{}, _inst_queue{ xQueueCreate( 10, sizeof( InstPacket_t ) ) },
@@ -65,7 +65,7 @@ void SubControl::run() {
 
     float thermo_measure;
 
-    std::deque<uint8_t> send_bytes;
+    std::vector<uint8_t> send_bytes;
 
     for ( ;; ) {
         switch ( _state ) {
@@ -100,13 +100,13 @@ void SubControl::run() {
                 }
 
                 if ( xQueueReceive( _inst_queue, &received_inst, 0 ) ) {
-                    if ( received_inst.inst_type == STOP ) {
+                    if ( received_inst.inst_type == inst_t::STOP ) {
                         R2D2_DEBUG_LOG( "State:%d - SubControl Received a STOP instruction", _state );
-                        send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                        send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                         _data_sender.sendBytes( send_bytes );
                         b_reset = true;
                         break;
-                    } else if ( received_inst.inst_type == NEW_POS ) {
+                    } else if ( received_inst.inst_type == inst_t::NEW_POS ) {
                         R2D2_DEBUG_LOG(
                             "State:%d - SubControl Received a NEW_POS instruction with args: %d, "
                             "%d, %d",
@@ -120,7 +120,7 @@ void SubControl::run() {
                             float z = received_inst.data_bytes[2] / 255.0;
                             _travel_control.newDest( x, y, z );
 
-                            send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                            send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                             _data_sender.sendBytes( send_bytes );
 
                             _state = state_t::TRAVEL;
@@ -148,29 +148,29 @@ void SubControl::run() {
                     _travel_control.updateCurPos( x, y, z );
                 }
                 if ( xQueueReceive( _inst_queue, &received_inst, 0 ) ) {
-                    if ( received_inst.inst_type == NEW_POS ) {
+                    if ( received_inst.inst_type == inst_t::NEW_POS ) {
                         R2D2_DEBUG_LOG(
                             "State:%d - SubControl Received a NEW_POS instruction with args: %d, "
                             "%d, %d",
                             _state, received_inst.data_bytes[0], received_inst.data_bytes[1],
                             received_inst.data_bytes[2] );
-                        send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                        send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                         _data_sender.sendBytes( send_bytes );
                         break;
-                    } else if ( received_inst.inst_type == STOP ) {
+                    } else if ( received_inst.inst_type == inst_t::STOP ) {
                         R2D2_DEBUG_LOG( "State:%d - SubControl Received a STOP instruction", _state );
                         _travel_control.stop();
 
-                        send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                        send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                         _data_sender.sendBytes( send_bytes );
                         b_reset = true;
                         _state = state_t::INST;
                         break;
-                    } else if ( received_inst.inst_type == ARRIVED ) {
+                    } else if ( received_inst.inst_type == inst_t::ARRIVED ) {
                         R2D2_DEBUG_LOG( "State:%d - SubControl Received an ARRIVED instruction", _state );
                         _travel_control.stop();
 
-                        send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                        send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                         _data_sender.sendBytes( send_bytes );
                         _state = state_t::SENS;
                         break;
@@ -195,23 +195,23 @@ void SubControl::run() {
 
             case state_t::WAIT_ACK: {
                 if ( xQueueReceive( _inst_queue, &received_inst, 0 ) ) {
-                    if ( received_inst.inst_type == ACK ) {
+                    if ( received_inst.inst_type == inst_t::ACK ) {
                         R2D2_DEBUG_LOG( "State:%d - SubControl Received an ACK instruction", _state );
                         b_reset = true;
                         _state = state_t::INST;
                         break;
                     } else {
-                        if ( received_inst.inst_type == STOP ) {
+                        if ( received_inst.inst_type ==  inst_t::STOP ) {
                             R2D2_DEBUG_LOG( "State:%d - SubControl Received a STOP instruction", _state );
-                            send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                            send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                             _data_sender.sendBytes( send_bytes );
                             b_reset = true;
                             _state = state_t::INST;
                             break;
-                        } else if ( received_inst.inst_type == ARRIVED ) {
+                        } else if ( received_inst.inst_type == inst_t::ARRIVED ) {
                             R2D2_DEBUG_LOG(
                                 "State:%d - SubControl Received an ARRIVED instruction", _state );
-                            send_bytes = { _data_sender.generateInstructionHeader( ACK, 0 ) };
+                            send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                             _data_sender.sendBytes( send_bytes );
                             break;
                         } else {

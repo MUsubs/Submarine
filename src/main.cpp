@@ -5,8 +5,7 @@
 
 #include <array>
 
-#include "dummy_data_sender.hpp"
-#include "dummy_sen_types.hpp"
+#include "data_transceiver.hpp"
 #include "dummy_thermo_sensor.hpp"
 #include "motor.hpp"
 #include "motor_control.hpp"
@@ -30,9 +29,10 @@ asn::MotorControl motor_control( motor_pins );
 asn::SteerControl steer_control( mpu, motor_control, kalmanFilter );
 asn::TravelControl travel_control( motor_control, steer_control );
 
-sen::DummyDataSender dummy_sender{ LED_BUILTIN, 30 };
+sen::MessageInterpreter message_interpreter{};
+sen::DataTransceiver data_transceiver{ 10, 9, 2, true, message_interpreter, 1 };
 sen::DummyThermoSensor dummy_thermo{};
-sen::SubControl sub_control{ travel_control, dummy_sender, dummy_thermo, 1 };
+sen::SubControl sub_control{ travel_control, data_transceiver, dummy_thermo, 1 };
 
 void motorControlTask( void* pvParameters ) {
     asn::MotorControl* mc = reinterpret_cast<asn::MotorControl*>( pvParameters );
@@ -57,35 +57,35 @@ std::array<uint8_t, 3> d{ 3, 4, 5 };
 
 void simulateFullCommunication() {
     Serial.println( "==TEST== simulating full communication" );
-    sub_control.receivedINST( NEW_POS, a );
+    sub_control.receivedINST( inst_t::NEW_POS, a );
     // SubControl should do nothing
     vTaskDelay( 1000 );
 
-    sub_control.receivedUPDATE( CURR, b );
+    sub_control.receivedUPDATE( data_t::CURR, b );
     // TravelControl should update
-    vTaskDelay(1000);
-    sub_control.receivedINST( NEW_POS, a );
+    vTaskDelay( 1000 );
+    sub_control.receivedINST( inst_t::NEW_POS, a );
     // SubControl should set new pos and send ACK
     // TravelControl should set new pos
     vTaskDelay( 1000 );
 
-    sub_control.receivedUPDATE( CURR, b );
-    vTaskDelay(500);
-    sub_control.receivedUPDATE( CURR, c );
-    vTaskDelay(500);
-    sub_control.receivedUPDATE( CURR, d );
+    sub_control.receivedUPDATE( data_t::CURR, b );
+    vTaskDelay( 500 );
+    sub_control.receivedUPDATE( data_t::CURR, c );
+    vTaskDelay( 500 );
+    sub_control.receivedUPDATE( data_t::CURR, d );
     // SubControl should update thrice
     // Travelcontrol should update thrice
     vTaskDelay( 1000 );
 
-    sub_control.receivedINST( ARRIVED );
+    sub_control.receivedINST( inst_t::ARRIVED );
     // SubControl should stop travel and send ACK
     // TravelControl should stop travel
     // SubControl should send sensor data
     vTaskDelay( 1000 );
 
     // SubControl should wait for ACK
-    sub_control.receivedINST( ACK );
+    sub_control.receivedINST( inst_t::ACK );
     // SubControl should reset queues and start loop again
     vTaskDelay( 2000 );
     Serial.println( "==TEST== full communication test finished" );
@@ -95,25 +95,25 @@ void simulateFullCommunication() {
 
 void simulateStoppedCommunication() {
     Serial.println( "==TEST== simulating stopped communication" );
-    sub_control.receivedINST( STOP );
+    sub_control.receivedINST( inst_t::STOP );
     // SubControl should send ACK, reset queues and start loop again
     vTaskDelay( 1000 );
 
-    sub_control.receivedUPDATE( CURR, b );
-    vTaskDelay(500);
-    sub_control.receivedINST( NEW_POS, a );
-    sub_control.receivedINST( STOP );
+    sub_control.receivedUPDATE( data_t::CURR, b );
+    vTaskDelay( 500 );
+    sub_control.receivedINST( inst_t::NEW_POS, a );
+    sub_control.receivedINST( inst_t::STOP );
     // SubControl should stop travel, send ACK, reset queues and start loop again
     // TravelControl should stop travel
     vTaskDelay( 1000 );
 
-    sub_control.receivedUPDATE( CURR, b );
-    vTaskDelay(500);
-    sub_control.receivedINST( NEW_POS, a );
-    vTaskDelay(2000);
-    sub_control.receivedINST( ARRIVED );
-    vTaskDelay(2000);
-    sub_control.receivedINST( STOP );
+    sub_control.receivedUPDATE( data_t::CURR, b );
+    vTaskDelay( 500 );
+    sub_control.receivedINST( inst_t::NEW_POS, a );
+    vTaskDelay( 2000 );
+    sub_control.receivedINST( inst_t::ARRIVED );
+    vTaskDelay( 2000 );
+    sub_control.receivedINST( inst_t::STOP );
     // SubControl should send ACK, reset queues and start loop again
 
     vTaskDelay( 2000 );
