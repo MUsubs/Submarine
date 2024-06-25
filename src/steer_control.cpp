@@ -1,5 +1,8 @@
 #include "steer_control.hpp"
 
+#define R2D2_DEBUG_ENABLE
+#include "r2d2_debug_macros.hpp"
+
 namespace asn {
 
 SteerControl::SteerControl( Mpu6050 &mpu, MotorControl &motorControl, Kalman &kalmanFilter ) :
@@ -27,18 +30,18 @@ void SteerControl::PID() {
 
     pos_prev = steer_action;
     previous_z = current_z;
-    Serial.printf( "Steer action: %f\n", steer_action );
+    // Serial.printf( "Steer action: %f\n", steer_action );
 
     if ( round( mpu.getCurrent_z() +5) < steer_action ) {
-        Serial.println( "LEFT" );
+        // Serial.println( "LEFT" );
         motorControl.move( motorControl.direction_t::LEFT );
         vTaskDelay( wait_time );
     } else if ( round( mpu.getCurrent_z() -5) > steer_action ) {
-        Serial.println( "RIGHT" );
+        // Serial.println( "RIGHT" );
         motorControl.move( motorControl.direction_t::RIGHT );
         vTaskDelay( wait_time );
     } else {
-        Serial.println( "FORWARD" );
+        // Serial.println( "FORWARD" );
         motorControl.move( motorControl.direction_t::FORWARD );
         vTaskDelay( wait_time );
     }
@@ -64,7 +67,7 @@ void SteerControl::setUpSteerControl() {
 }
 
 void SteerControl::main() {
-    Serial.println( "start steer" );
+    // Serial.println( "start steer" );
     for ( ;; ) {
         if ( !stop ) {
             PID();
@@ -75,12 +78,12 @@ void SteerControl::main() {
 }
 
 void SteerControl::disable() {
-    Serial.println("disable steer");
+    R2D2_DEBUG_LOG("disable steer");
     stop = true;
 }
 
 void SteerControl::enable() {
-    Serial.println("enable steer");
+    R2D2_DEBUG_LOG("enable steer");
     stop = false;
 }
 

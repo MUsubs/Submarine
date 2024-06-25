@@ -19,27 +19,27 @@ void MotorControl::main() {
         if ( xQueueReceive( directions_queue, (void*)&direction, 0) ) {
             switch ( direction ) {
                 case LEFT:
-                    Serial.println( "links" );
+                    // Serial.println( "links" );
                     motor.setMotor( motor.steer, true, true );
                     break;
                 case RIGHT:
-                    Serial.println( "rechts" );
+                    // Serial.println( "rechts" );
                     motor.setMotor( motor.steer, true, false );
                     break;
                 case FORWARD:
-                    Serial.println( "voren" );
+                    // Serial.println( "voren" );
                     motor.setMotor( motor.speed, true, true );
                     break;
                 case BACKWARD:
-                    Serial.println( "achter" );
+                    // Serial.println( "achter" );
                     motor.setMotor( motor.speed, true, false );
                     break;
                 case UP:
-                    Serial.println("boven");
+                    // Serial.println("boven");
                     motor.setMotor( motor.depth, true, true );
                     break;
                 case DOWN:
-                    Serial.println( "beneden");
+                    // Serial.println( "beneden");
                     motor.setMotor( motor.depth, true, false );
                     break;
                 case STOP:
