@@ -28,7 +28,19 @@ public:
      * @brief Stops the submarine.
      */
     void stop();
+    /**
+     * @brief Sends a new destination to the submarine.
+     * @param dest_x The x-coordinate of the new destination.
+     * @param dest_y The y-coordinate of the new destination.
+     * @param dest_z The z-coordinate of the new destination.
+     */
     void newDest( const float dest_x, const float dest_y, const float dest_z );
+    /**
+     * @brief Updates the current position.
+     * @param cur_x The current x-coordinate.
+     * @param cur_y The current y-coordinate.
+     * @param cur_z The current z-coordinate.
+     */
     void updateCurPos( const float cur_x, const float cur_y, const float cur_z );
     void main();
 
