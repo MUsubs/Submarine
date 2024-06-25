@@ -7,7 +7,8 @@
 
 #include "motor.hpp"
 
-namespace asn {
+namespace asn
+{
 
 
 /**
@@ -47,6 +48,6 @@ private:
     xQueueHandle directions_queue;
 };
 
-}  // namespace asn
+} // namespace asn
 
 #endif  // R2D2_MOTOR_CONTROL_HPP

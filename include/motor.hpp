@@ -1,9 +1,12 @@
 #ifndef R2D2_MOTOR_HPP
 #define R2D2_MOTOR_HPP
+#ifndef R2D2_MOTOR_HPP
+#define R2D2_MOTOR_HPP
 
 #include <Arduino.h>
 
-namespace asn {
+namespace asn
+{
 
 
 /**
@@ -32,11 +35,11 @@ public:
     uint8_t speed[2];
     uint8_t depth[2];
 
-private:
-    uint8_t *motor_pins;
-    uint8_t pin_driver_eep;
-};
+    private:
+        uint8_t *motor_pins;
+        uint8_t pin_driver_eep;
+    };
 
-}  // namespace asn
+} // namespace asn
 
 #endif  // R2D2_MOTOR_HPP

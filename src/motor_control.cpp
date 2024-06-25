@@ -1,6 +1,7 @@
 #include "motor_control.hpp"
 
-namespace asn {
+namespace asn
+{
 
 MotorControl::MotorControl( uint8_t *pins ) : motor( pins ) {
     directions_queue = xQueueCreate( 10, sizeof( direction_t));
