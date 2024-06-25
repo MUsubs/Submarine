@@ -9,6 +9,9 @@ namespace asn {
 class DummyControl {
 public:
     DummyControl( TravelControl& travelControl );
+    /**
+     * @brief A dummy function to test the submarine's travel control.
+     */
     void main();
 
 private:
