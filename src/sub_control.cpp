@@ -3,7 +3,7 @@
 namespace sen {
 
 SubControl::SubControl(
-    asn::TravelControl& travel_control, DataTransceiver& data_sender, DummyThermoSensor& thermo_sensor,
+    asn::TravelControl& travel_control, DataTransceiver& data_sender, ThermoSensor& thermo_sensor,
     int task_priority ) :
     _travel_control{ travel_control }, _data_sender{ data_sender }, _thermo_sensor( thermo_sensor ),
     _this_task_handle{}, _inst_queue{ xQueueCreate( 10, sizeof( InstPacket_t ) ) },
@@ -181,7 +181,7 @@ void SubControl::run() {
             }
 
             case state_t::SENS: {
-                thermo_measure = _thermo_sensor.getTemperature();
+                thermo_measure = _thermo_sensor.getTemp();
                 R2D2_DEBUG_LOG(
                     "State:%d - SubControl Measuring and sending. Measurement: %f", _state, thermo_measure );
                 uint8_t thermo_int = (uint8_t)thermo_measure;

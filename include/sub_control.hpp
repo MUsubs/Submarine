@@ -11,7 +11,7 @@
 #include <array>
 
 #include "data_transceiver.hpp"
-#include "dummy_thermo_sensor.hpp"
+#include "thermo_sensor.hpp"
 #include "r2d2_debug_macros.hpp"
 #include "travel_control.hpp"
 
@@ -42,7 +42,7 @@ public:
      * @param task_priority FreeRTOS priority
      */
     SubControl(
-        asn::TravelControl& travel_control, DataTransceiver& data_sender, DummyThermoSensor& thermo_sensor,
+        asn::TravelControl& travel_control, DataTransceiver& data_sender, ThermoSensor& thermo_sensor,
         int task_priority );
 
     /**
@@ -116,7 +116,7 @@ public:
 private:
     asn::TravelControl& _travel_control;
     DataTransceiver& _data_sender;
-    DummyThermoSensor& _thermo_sensor;
+    ThermoSensor& _thermo_sensor;
 
     xTaskHandle _this_task_handle;
     xQueueHandle _inst_queue;

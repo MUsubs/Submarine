@@ -14,6 +14,7 @@
 #include "steer_control.hpp"
 #include "sub_control.hpp"
 #include "travel_control.hpp"
+#include "thermo_sensor.hpp"
 
 xTaskHandle motor_control_task_handle;
 xTaskHandle steer_control_task_handle;
@@ -31,8 +32,8 @@ asn::TravelControl travel_control( motor_control, steer_control );
 
 sen::MessageInterpreter message_interpreter{ 20, 1 };
 sen::DataTransceiver data_transceiver{ 10, 9, 2, true, message_interpreter, 1 };
-sen::DummyThermoSensor dummy_thermo{};
-sen::SubControl sub_control{ travel_control, data_transceiver, dummy_thermo, 1 };
+sen::ThermoSensor thermo_sensor{21};
+sen::SubControl sub_control{ travel_control, data_transceiver, thermo_sensor, 1 };
 
 void motorControlTask( void* pvParameters ) {
     asn::MotorControl* mc = reinterpret_cast<asn::MotorControl*>( pvParameters );
