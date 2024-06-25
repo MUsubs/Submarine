@@ -13,6 +13,16 @@ DataTransceiver::DataTransceiver(
     xTaskCreate( staticRun, "DATA_TRANSCEIVER", 3000, (void*)this, task_priority, &_this_task_handle );
 }
 
+void DataTransceiver::activate() {
+    vTaskResume( _this_task_handle );
+    _state = state_t::COMMAND;
+}
+
+void DataTransceiver::deactivate() {
+    vTaskSuspend( _this_task_handle );
+    _state = state_t::IDLE;
+}
+
 void DataTransceiver::sendBytes( std::vector<uint8_t>& bytes ) {
     std::vector<uint8_t>* send_bytes;
     send_bytes = &bytes;

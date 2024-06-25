@@ -29,7 +29,7 @@ asn::MotorControl motor_control( motor_pins );
 asn::SteerControl steer_control( mpu, motor_control, kalmanFilter );
 asn::TravelControl travel_control( motor_control, steer_control );
 
-sen::MessageInterpreter message_interpreter{};
+sen::MessageInterpreter message_interpreter{ 20, 1 };
 sen::DataTransceiver data_transceiver{ 10, 9, 2, true, message_interpreter, 1 };
 sen::DummyThermoSensor dummy_thermo{};
 sen::SubControl sub_control{ travel_control, data_transceiver, dummy_thermo, 1 };
