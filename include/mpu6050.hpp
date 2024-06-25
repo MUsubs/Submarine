@@ -2,45 +2,41 @@
 #define R2D2_MPU6050_HPP
 
 #include <MPU6050_light.h>
-
-#include "Arduino.h"
-#include "Kalman.h"
+#include <Arduino.h>
 #include "Wire.h"
 
-namespace asn {
+namespace asn
+{
+    /**
+     * @class Class Mpu6050 mpu6050.hpp
+     * @brief A class that controls the mpu6050 gyroscope
+     */
 
-class Mpu6050 {
-public:
-    Mpu6050( MPU6050& mpu, Kalman& kalmanFilter );
-    float PID();
-    float getSetpoint();
-    void setSetpoint( float s );
-    float highPassFilter( float current_value, float previous_value );
-    void setUpGyro();
-    float getCurrent_z();
-    void kalman();
+    class Mpu6050
+    {
+    public:
+        Mpu6050(MPU6050 &mpu);
+        /**
+         * @brief Starts the setup sequence of the mpu6050
+         * @details Starts the mpu6050 and applies a delay of 1 second so the mpu6050 can calibrate itself.
+         */
+        void setUpGyro();
+        /**
+         * @brief Returns the current z angle of the mpu6050
+         * @return The Z-angle as calculated by the mpu6050
+         */
+        float getCurrent_z();
+        /**
+         * @brief Returns the current z acceleration of the mpu6050
+         * @return The Z-acceleration as calculated by the mpu6050
+         */
+        float getAcc_z();
+        
+        
 
-private:
-    MPU6050& mpu;
-    Kalman& kalmanFilter;
-    float output = 0;
-    float pos_prev = 0;
-    float previous_z = 0.0;
-    const float alpha = 0.8;
-    double setpoint = 0.0;
-    double error = 0.0;
-    double error_sum = 0.0;
-    double error_prev = 0.0;
-    double error_div = 0.0;
-    const double kp = 0.725;
-    const double ki = 1.02;
-    const double kd = 0.01;
-    const double dt = 0.1;
-    unsigned long currentTime = 0;
-    float prevTime = 0;
-    float filteredAngle = 0;
-    int int_count = 0;
-};
+    private:
+        MPU6050 &mpu;
+    };
 
 }
-#endif  // R2D2_MPU6050_HPP
+#endif // R2D2_MPU6050_HPP

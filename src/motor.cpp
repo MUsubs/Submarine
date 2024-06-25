@@ -4,7 +4,8 @@ namespace asn {
 
 Motor::Motor( uint8_t* pins ) :
     motor_pins( pins ),
-    pin_driver_eep( motor_pins[0] )  // Initialize pin_driver_eep with the first element of motor_pins
+    // Initialize pin_driver_eep with the first element of motor_pins
+    pin_driver_eep( motor_pins[0] ) 
 {
     // Initialize arrays with the correct elements from motorpins
     steer[0] = motor_pins[5];
