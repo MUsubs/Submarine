@@ -1,7 +1,5 @@
 #ifndef R2D2_MOTOR_HPP
 #define R2D2_MOTOR_HPP
-#ifndef R2D2_MOTOR_HPP
-#define R2D2_MOTOR_HPP
 
 #include <Arduino.h>
 
