@@ -14,7 +14,7 @@ namespace asn
     class SteerControl
     {
     public:
-        SteerControl(Mpu6050 &mpu, MotorControl &motorControl, Kalman &kalmanFilter);
+        SteerControl(Mpu6050 &mpu, MotorControl &motor_control, Kalman &kalman_filter);
         /**
          * @brief Sets the setpoint to a given value.
          * @param s The parameter to set the setpoint to.
@@ -48,8 +48,8 @@ namespace asn
 
 
         Mpu6050 &mpu;
-        MotorControl &motorControl;
-        Kalman &kalmanFilter;
+        MotorControl &motor_control;
+        Kalman &kalman_filter;
         float steer_action;
         float previous_z = 0.0;
         float pos_prev = 0.0;
@@ -63,8 +63,8 @@ namespace asn
         const double kd = 0.0;
         const double dt = 0.1;
         const float alpha = 0.8;
-        unsigned long currentTime = 0;
-        float prevTime = 0;
+        unsigned long current_time = 0;
+        float prev_time = 0;
         const int wait_time = 50;
 
         bool stop;
