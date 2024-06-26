@@ -12,13 +12,11 @@ MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
 }
 
 void MessageInterpreter::activate() {
-    // R2D2_DEBUG_LOG( "Activating MessageInterpreter instance" );
     vTaskResume( _this_task_handle );
     _state = state_t::READ;
 }
 
 void MessageInterpreter::deactivate() {
-    // R2D2_DEBUG_LOG( "Deactivating MessageInterpreter instance" );
     vTaskSuspend( _this_task_handle );
     _state = state_t::IDLE;
 }
@@ -72,8 +70,6 @@ void MessageInterpreter::interpretHeader(
             readDataPackets( bytes_amount );
         }
 
-        // controlSub.receivedINST(instruction, data_array);
-
     } else if ( type == sen::packet_t::UPDATE ) {
         // Extract and assign the instruction
         data_type = static_cast<sen::data_t>( ( header & 0b00111000 ) >> 3 );
@@ -83,7 +79,6 @@ void MessageInterpreter::interpretHeader(
 
         readDataPackets( bytes_amount );
 
-        // controlSub.receivedUPDATE(data_type, data_array)
     }
 }
 
@@ -95,7 +90,7 @@ void MessageInterpreter::readDataPackets( uint8_t &bytes_amount ) {
 
     if ( bytes_amount < DATA_ARRAY_SIZE ) {
         for ( unsigned int i = 0; i < bytes_amount; i++ ) {
-            xQueueReceive( _message_done_queue, &byte, 0 );
+            xQueueReceive( _packets_queue, &byte, 0 );
             data_array[i] = byte;
         }
     }
