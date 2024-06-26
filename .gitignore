@@ -15,7 +15,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+!lib/
 lib64/
 parts/
 sdist/
@@ -671,3 +671,8 @@ manifest.mf
 nbbuild.xml
 nbproject
 *.ino
+
+# DOXYGEN
+
+html/
+latex/
