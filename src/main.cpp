@@ -144,6 +144,7 @@ void setup() {
         &travel_control_task_handle );
 
     sub_control.activate();
+    message_interpreter.setListener(&sub_control);
 
     vTaskDelay( 1000 );
     sen::simulateFullCommunication();

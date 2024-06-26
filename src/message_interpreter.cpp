@@ -1,10 +1,13 @@
 #include "message_interpreter.hpp"
 
+#include "message_interpreter_listener.hpp"
+
 namespace sen {
 
 MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
     _packets_queue( xQueueCreate( queue_length, sizeof( uint8_t ) ) ),
-    _message_done_queue( xQueueCreate( 10, sizeof( uint8_t ) ) ) {
+    _message_done_queue( xQueueCreate( 10, sizeof( uint8_t ) ) ), _this_task_handle{}, data_array{},
+    useless_byte{}, listener{} {
     xTaskCreate( staticRun, "MESSAGE_INTERPRETER", 4000, (void *)this, task_priority, &_this_task_handle );
 }
 
@@ -27,6 +30,10 @@ void MessageInterpreter::byteReceived( uint8_t msg ) {
 void MessageInterpreter::messageDone() {
     uint8_t msg = 1;
     xQueueSend( _message_done_queue, &msg, 0 );
+}
+
+void MessageInterpreter::setListener( MessageInterpreterListener *set_listener ) {
+    listener = set_listener;
 }
 
 void MessageInterpreter::interpretHeader(
@@ -101,10 +108,7 @@ void MessageInterpreter::clear() {
     sensor_id = sens_t::NONE;
     data_type = data_t::NONE;
     uint8_t useless_byte = 0;
-
-    for ( unsigned int i = 0; i < DATA_ARRAY_SIZE; i++ ) {
-        data_array[i] = 0;
-    }
+    data_array.fill( 0 );
 }
 
 void MessageInterpreter::run() {
@@ -130,6 +134,14 @@ void MessageInterpreter::run() {
 
             case MESSAGE:
                 interpretHeader( type, instruction, sensor_id, data_type, bytes_amount );
+                if ( type == packet_t::INST ) {
+                    listener->receivedINST( instruction, data_array );
+                } else if ( type == packet_t::UPDATE ) {
+                    listener->receivedUPDATE( data_type, data_array );
+                } else if ( type == packet_t::SENS ) {
+                    float sens_data = data_array[0] + (data_array[1]*0.01f);
+                    listener->receivedSENS( sensor_id, sens_data );
+                }
                 clear();
                 _state = IDLE;
 
