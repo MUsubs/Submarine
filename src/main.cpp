@@ -6,7 +6,6 @@
 #include <array>
 
 #include "data_transceiver.hpp"
-#include "dummy_thermo_sensor.hpp"
 #include "motor.hpp"
 #include "motor_control.hpp"
 #include "mpu6050.hpp"
