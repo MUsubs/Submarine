@@ -71,13 +71,22 @@ void MessageInterpreter::interpretHeader( sen::packet_t &type,
         bytes_amount = header & 0b00000111;
 
         if ( instruction == sen::inst_t::NEW_POS && bytes_amount > 0 ) {
-            Serial.printf( "Instruction type is NEW_POS");
+            Serial.printf( "Instruction type is NEW_POS\n" );
             readDataPackets( bytes_amount );
+        }
+
+        if ( instruction == sen::inst_t::ACK ) {
+            Serial.printf( "Instruction type is ACK\n" );
+        } else if ( instruction == sen::inst_t::STOP ) {
+            Serial.printf( "Instruction type is STOP\n" );
+        } else if ( instruction == sen::inst_t::ARRIVED ) {
+            Serial.printf( "Instruction type is ARRIVED\n" );
         }
 
         // controlSub.receivedINST(instruction, data_array);
 
     } else if ( type == sen::packet_t::UPDATE ) {
+        Serial.printf( "Instruction type is UPDATE\n" );
         // Extract and assign the instruction
         data_type = static_cast<sen::data_t>( ( header & 0b00111000 ) >> 3 );
 
@@ -98,9 +107,9 @@ void MessageInterpreter::readDataPackets( uint8_t &bytes_amount ) {
 
     if ( bytes_amount < DATA_ARRAY_SIZE ) {
         for ( unsigned int i = 0; i < bytes_amount; i++ ) {
-            xQueueReceive( _message_done_queue, &byte, 0 );
+            xQueueReceive( _packets_queue, &byte, 0 );
             data_array[i] = byte;
-            Serial.printf( "DATA_BYTE : %02x\n", byte);
+            Serial.printf( "DATA_BYTE : %02x\n", byte );
         }
     }
 }

@@ -12,27 +12,13 @@
 
 #define FREQUENCY 400
 
-sen::PhotoDiode diode( 26, FREQUENCY * 20, 20 * 4 * 2, 1 );
-sen::DataReceiver receiver( FREQUENCY );
 sen::MessageInterpreter interpreter( 32, 1 );
-sen::DataSender sender( 22, FREQUENCY, 32, 1 );
 sen::DummyData dummy(&interpreter);
 
 void setup() {
-    // serial monitor init
     Serial.begin( 57600 );
-
-    // receivier task
-    diode.setListener( &receiver );
-    receiver.setListener( &interpreter );
-
-    // make random pseudo
-    randomSeed(2);
 }
 
 void loop() {
-    uint8_t msg = random();
-    Serial.printf( "sending %02x\n", msg );
-    sender.sendBytes( { msg } );
-    delay( 1000 );
+    delay( 100 );
 }

@@ -12,15 +12,15 @@ void DummyData::run() {
     for ( ;; ) {
         switch ( _state ) {
             case IDLE:
-                vTaskDelay( 5000 );
+                vTaskDelay( 15000 );
                 _state = SEND;
                 break;
 
             case SEND:
-                uint8_t header = 0b01001101;
+                uint8_t header = 0b11010010;
                 message_interpreter->byteReceived( header );
-                uint8_t data = 0b00000001;
-                for ( unsigned int i = 0; i < 5; i++ ) {
+                uint8_t data = 0b11111111;
+                for ( unsigned int i = 0; i < 2; i++ ) {
                     message_interpreter->byteReceived( data );
                 }
 
