@@ -5,8 +5,8 @@
 
 namespace asn {
 
-TravelControl::TravelControl( MotorControl &motorControl, SteerControl &steerControl ) :
-    motorControl( motorControl ), steerControl( steerControl ), do_stop( false ) {
+TravelControl::TravelControl( MotorControl &motor_control, SteerControl &steer_control ) :
+    motor_control( motor_control ), steer_control( steer_control ), do_stop( false ) {
     new_dest_queue = xQueueCreate( 5, sizeof( std::array<float, 3> ) );
     cur_queue = xQueueCreate( 5, sizeof( std::array<float, 3> ) );
 }
@@ -17,7 +17,7 @@ void TravelControl::calculateRotation( const float cur_x, const float cur_z ) {
         ( sqrt( pow( ( cur_x - prev_x ), 2 ) + pow( ( cur_z - prev_z ), 2 ) ) *
           sqrt( pow( ( dest_x - cur_x ), 2 ) + pow( ( dest_z - cur_z ), 2 ) ) ) );
     angle = angle * ( 180 / ( atan( 1 ) * 4 ) );
-    steerControl.setSetpoint( angle );
+    steer_control.setSetpoint( angle );
     R2D2_DEBUG_LOG( "Finished calculateRotation, result = %f\n", angle );
 }
 
@@ -78,8 +78,8 @@ void TravelControl::main() {
 
             case stop_travel:
                 // Serial.println("stop travel");
-                motorControl.move( motorControl.direction_t::STOP );
-                steerControl.disable();
+                motor_control.move( motor_control.direction_t::STOP );
+                steer_control.disable();
 
                 xQueueReset( cur_queue );
 
@@ -97,26 +97,26 @@ void TravelControl::main() {
                 // if arrived at x and z.
                 if ( dest_x == cur_x && dest_z == cur_z ) {
                     // Serial.println("height time");
-                    steerControl.disable();
+                    steer_control.disable();
                     if ( cur_y < dest_y ) {
-                        motorControl.move( motorControl.direction_t::UP );
+                        motor_control.move( motor_control.direction_t::UP );
                     } else if ( cur_y > dest_y ) {
-                        motorControl.move( motorControl.direction_t::DOWN );
+                        motor_control.move( motor_control.direction_t::DOWN );
                     } else {
-                        motorControl.move( motorControl.direction_t::STOP );
+                        motor_control.move( motor_control.direction_t::STOP );
                     }
                     // not arrived, prev same as z. Stuck?
                 } else if ( prev_x == cur_x && prev_z == cur_z ) {
                     // stop steering when going backwards.
                     //  Serial.println("back time");
-                    steerControl.disable();
-                    motorControl.move( motorControl.direction_t::BACKWARD );
+                    steer_control.disable();
+                    motor_control.move( motor_control.direction_t::BACKWARD );
                     vTaskDelay( 100 );
-                    motorControl.move( motorControl.direction_t::STOP );
-                    steerControl.enable();
+                    motor_control.move( motor_control.direction_t::STOP );
+                    steer_control.enable();
                 } else {
                     // x and y not right, so continue steering.
-                    steerControl.enable();
+                    steer_control.enable();
                     calculateRotation( cur_x, cur_z );
                 }
 
@@ -133,9 +133,9 @@ void TravelControl::main() {
                 dest_x = new_dest[0];
                 dest_y = new_dest[1];
                 dest_z = new_dest[2];
-                motorControl.move( motorControl.direction_t::FORWARD );
+                motor_control.move( motor_control.direction_t::FORWARD );
                 vTaskDelay( 100 );
-                motorControl.move( motorControl.direction_t::STOP );
+                motor_control.move( motor_control.direction_t::STOP );
 
                 travel_state = read;
                 break;

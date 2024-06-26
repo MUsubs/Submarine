@@ -15,7 +15,7 @@ namespace asn {
  */
 class TravelControl {
 public:
-    TravelControl( MotorControl &motorControl, SteerControl &steerControl );
+    TravelControl( MotorControl &motor_control, SteerControl &steer_control );
     /**
      * @brief Calculates the needed rotation.
      * @details Calculates the rotation in degrees that the submarine
@@ -45,8 +45,8 @@ public:
     void main();
 
 private:
-    MotorControl &motorControl;
-    SteerControl &steerControl;
+    MotorControl &motor_control;
+    SteerControl &steer_control;
     float dest_x = 0;
     float dest_y = 0;
     float dest_z = 0;

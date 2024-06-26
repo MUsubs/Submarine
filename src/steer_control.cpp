@@ -5,8 +5,8 @@
 
 namespace asn {
 
-SteerControl::SteerControl( Mpu6050 &mpu, MotorControl &motorControl, Kalman &kalmanFilter ) :
-    mpu( mpu ), motorControl( motorControl ), kalmanFilter( kalmanFilter ), stop( true ){
+SteerControl::SteerControl( Mpu6050 &mpu, MotorControl &motor_control, Kalman &kalman_filter ) :
+    mpu( mpu ), motor_control( motor_control ), kalman_filter( kalman_filter ), stop( true ){
 }
 
 void SteerControl::setSetpoint( float s ) {
@@ -34,36 +34,36 @@ void SteerControl::PID() {
 
     if ( round( mpu.getCurrent_z() +5) < steer_action ) {
         // Serial.println( "LEFT" );
-        motorControl.move( motorControl.direction_t::LEFT );
+        motor_control.move( motor_control.direction_t::LEFT );
         vTaskDelay( wait_time );
     } else if ( round( mpu.getCurrent_z() -5) > steer_action ) {
         // Serial.println( "RIGHT" );
-        motorControl.move( motorControl.direction_t::RIGHT );
+        motor_control.move( motor_control.direction_t::RIGHT );
         vTaskDelay( wait_time );
     } else {
         // Serial.println( "FORWARD" );
-        motorControl.move( motorControl.direction_t::FORWARD );
+        motor_control.move( motor_control.direction_t::FORWARD );
         vTaskDelay( wait_time );
     }
-    motorControl.move( motorControl.direction_t::STOP );
+    motor_control.move( motor_control.direction_t::STOP );
 }
 
 void SteerControl::kalman() {
-    currentTime = millis();
+    current_time = millis();
 
     steer_action =
-        kalmanFilter.getAngle( mpu.getCurrent_z(), mpu.getAcc_z(), ( currentTime - prevTime ) / 1000 );
+        kalman_filter.getAngle( mpu.getCurrent_z(), mpu.getAcc_z(), ( current_time - prev_time ) / 1000 );
 
-    prevTime = currentTime;
+    prev_time = current_time;
 }
 
 void SteerControl::setUpSteerControl() {
     mpu.setUpGyro();
-    kalmanFilter.setAngle( 0.0f );
-    kalmanFilter.setQangle( 0.001f );
-    kalmanFilter.setQbias( 0.0067f );
-    kalmanFilter.setRmeasure( 0.075f );
-    prevTime = millis();
+    kalman_filter.setAngle( 0.0f );
+    kalman_filter.setQangle( 0.001f );
+    kalman_filter.setQbias( 0.0067f );
+    kalman_filter.setRmeasure( 0.075f );
+    prev_time = millis();
 }
 
 void SteerControl::main() {

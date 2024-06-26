@@ -23,11 +23,11 @@ xTaskHandle dummy_control_task_handle;
 
 static uint8_t motor_pins[7] = { 22, 21, 20, 19, 18, 12, 13 };
 static uint8_t button_pins[4] = { 16, 17, 26, 27 };
-Kalman kalmanFilter;
+Kalman kalman_filter;
 MPU6050 gyro( Wire );
 asn::Mpu6050 mpu( gyro );
 asn::MotorControl motor_control( motor_pins );
-asn::SteerControl steer_control( mpu, motor_control, kalmanFilter );
+asn::SteerControl steer_control( mpu, motor_control, kalman_filter );
 asn::TravelControl travel_control( motor_control, steer_control );
 
 sen::DummyDataSender dummy_sender{ LED_BUILTIN, 30 };
