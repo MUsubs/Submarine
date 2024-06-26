@@ -58,7 +58,7 @@ private:
     xQueueHandle cur_queue;
     bool do_stop;
 
-    enum travel_state_t {start, read, stop_travel, update_current, new_destination };
+    enum travel_state_t {START, READ, STOP_TRAVEL, UPDATE_CURRENT, NEW_DESTINATION };
 };
 
 }  // namespace asn

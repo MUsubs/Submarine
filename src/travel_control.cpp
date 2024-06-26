@@ -42,7 +42,7 @@ void TravelControl::updateCurPos( float cur_x, float cur_y, float cur_z ) {
 
 void TravelControl::main() {
     R2D2_DEBUG_LOG( "TravelControl start main" );
-    travel_state_t travel_state = start;
+    travel_state_t travel_state = START;
     float new_dest[3];
     float cur[3];
     float cur_x = 0;
@@ -51,32 +51,32 @@ void TravelControl::main() {
 
     for ( ;; ) {
         switch ( travel_state ) {
-            case start:
+            case START:
                 if ( xQueueReceive( cur_queue, cur, 0 ) ) {
                     R2D2_DEBUG_LOG( "STATE START READING CUR QUEUE: %f, %f, %f", cur[0], cur[1], cur[2] );
                     prev_x = cur[0];
                     prev_y = cur[1];
                     prev_z = cur[2];
-                    travel_state = read;
+                    travel_state = READ;
                 } else if ( do_stop ) {
-                    travel_state = stop_travel;
+                    travel_state = STOP_TRAVEL;
                 }
                 break;
-            case read:
+            case READ:
                 // if bool stop has been set true, stop state.
                 // else if cur_cueue has data, update current position state.
                 // else if dest_queue has data, dest state.
                 if ( do_stop ) {
-                    travel_state = stop_travel;
+                    travel_state = STOP_TRAVEL;
                 } else if ( xQueueReceive( cur_queue, cur, 0 ) ) {
-                    travel_state = update_current;
+                    travel_state = UPDATE_CURRENT;
                     // Serial.printf("x =  %f, y = %f, z = %f", cur[0], cur[1], cur[2]);
                 } else if ( xQueueReceive( new_dest_queue, new_dest, 0 ) ) {
-                    travel_state = new_destination;
+                    travel_state = NEW_DESTINATION;
                 }
                 break;
 
-            case stop_travel:
+            case STOP_TRAVEL:
                 // Serial.println("stop travel");
                 motor_control.move( motor_control.direction_t::STOP );
                 steer_control.disable();
@@ -85,10 +85,10 @@ void TravelControl::main() {
 
                 do_stop = false;
 
-                travel_state = read;
+                travel_state = READ;
                 break;
 
-            case update_current:
+            case UPDATE_CURRENT:
                 R2D2_DEBUG_LOG( "!!!!!!!!!!!TravelControl state update current" );
                 cur_x = cur[0];
                 cur_y = cur[1];
@@ -125,10 +125,10 @@ void TravelControl::main() {
                 prev_y = cur_y;
                 prev_z = cur_z;
 
-                travel_state = read;
+                travel_state = READ;
                 break;
 
-            case new_destination:
+            case NEW_DESTINATION:
                 // Serial.println("new dest");
                 dest_x = new_dest[0];
                 dest_y = new_dest[1];
@@ -137,7 +137,7 @@ void TravelControl::main() {
                 vTaskDelay( 100 );
                 motor_control.move( motor_control.direction_t::STOP );
 
-                travel_state = read;
+                travel_state = READ;
                 break;
 
             default:
