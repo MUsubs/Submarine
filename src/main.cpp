@@ -2,6 +2,7 @@
 #include "data_receiver.hpp"
 #include "message_interpreter.hpp"
 #include "data_sender.hpp"
+#include "dummy_data.hpp"
 
 #include <unordered_set>
 #include <FreeRTOS.h>
@@ -15,6 +16,7 @@ sen::PhotoDiode diode( 26, FREQUENCY * 20, 20 * 4 * 2, 1 );
 sen::DataReceiver receiver( FREQUENCY );
 sen::MessageInterpreter interpreter( 32, 1 );
 sen::DataSender sender( 22, FREQUENCY, 32, 1 );
+sen::DummyData dummy(&interpreter);
 
 void setup() {
     // serial monitor init

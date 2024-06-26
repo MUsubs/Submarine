@@ -48,7 +48,9 @@ void MessageInterpreter::interpretHeader( sen::packet_t &type,
     type = static_cast<sen::packet_t>( ( header & 0b11000000 ) >> 6 );
 
     if ( type == sen::packet_t::SENS ) {
-        // Extract and assign the instruction
+        Serial.printf( "Header received, type: SENS\n" );
+
+        // Extract and assign sensor_id
         sensor_id = static_cast<sen::sens_t>( ( header & 0b00110000 ) >> 4 );
 
         // Extract and assign the bytes amount
@@ -63,10 +65,13 @@ void MessageInterpreter::interpretHeader( sen::packet_t &type,
         // Extract and assign the instruction
         instruction = static_cast<sen::inst_t>( ( header & 0b00111000 ) >> 3 );
 
+        Serial.printf( "Header received, type: INST\n" );
+
         // Extract and assign the bytes amount
         bytes_amount = header & 0b00000111;
 
         if ( instruction == sen::inst_t::NEW_POS && bytes_amount > 0 ) {
+            Serial.printf( "Instruction type is NEW_POS");
             readDataPackets( bytes_amount );
         }
 
@@ -95,6 +100,7 @@ void MessageInterpreter::readDataPackets( uint8_t &bytes_amount ) {
         for ( unsigned int i = 0; i < bytes_amount; i++ ) {
             xQueueReceive( _message_done_queue, &byte, 0 );
             data_array[i] = byte;
+            Serial.printf( "DATA_BYTE : %02x\n", byte);
         }
     }
 }
@@ -149,11 +155,11 @@ MessageInterpreter::~MessageInterpreter() {
     vQueueDelete( _message_done_queue );
 }
 
-void MessageInterpreter::staticRun( void* pvParameters ) {
-    MessageInterpreter* message_interpreter = reinterpret_cast<MessageInterpreter*>( pvParameters );
+void MessageInterpreter::staticRun( void *pvParameters ) {
+    MessageInterpreter *message_interpreter =
+        reinterpret_cast<MessageInterpreter *>( pvParameters );
     message_interpreter->run();
     vTaskDelete( message_interpreter->_this_task_handle );
 }
-
 
 }  // namespace sen
