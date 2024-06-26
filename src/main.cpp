@@ -12,8 +12,8 @@
 #include "r2d2_debug_macros.hpp"
 #include "steer_control.hpp"
 #include "sub_control.hpp"
-#include "travel_control.hpp"
 #include "thermo_sensor.hpp"
+#include "travel_control.hpp"
 
 xTaskHandle motor_control_task_handle;
 xTaskHandle steer_control_task_handle;
@@ -31,7 +31,7 @@ asn::TravelControl travel_control( motor_control, steer_control );
 
 sen::MessageInterpreter message_interpreter{ 20, 1 };
 sen::DataTransceiver data_transceiver{ 10, 9, 2, true, message_interpreter, 1 };
-sen::ThermoSensor thermo_sensor{21};
+sen::ThermoSensor thermo_sensor{ 21 };
 sen::SubControl sub_control{ travel_control, data_transceiver, thermo_sensor, 1 };
 
 void motorControlTask( void* pvParameters ) {
@@ -50,6 +50,7 @@ void travelControlTask( void* pvParameters ) {
 }
 
 namespace sen {
+
 std::array<uint8_t, 3> a{ 255, 127, 15 };
 std::array<uint8_t, 3> b{ 1, 2, 3 };
 std::array<uint8_t, 3> c{ 2, 3, 4 };
@@ -144,6 +145,7 @@ void setup() {
         &travel_control_task_handle );
 
     sub_control.activate();
+    message_interpreter.setListener( &sub_control );
 
     vTaskDelay( 1000 );
     sen::simulateFullCommunication();

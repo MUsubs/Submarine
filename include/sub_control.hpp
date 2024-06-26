@@ -11,8 +11,9 @@
 #include <array>
 
 #include "data_transceiver.hpp"
-#include "thermo_sensor.hpp"
+#include "message_interpreter_listener.hpp"
 #include "r2d2_debug_macros.hpp"
+#include "thermo_sensor.hpp"
 #include "travel_control.hpp"
 
 namespace sen {
@@ -31,7 +32,7 @@ namespace sen {
  * based on the current state of the submarine (Idle, Receive new position,
  * Travel and receive updates, Measure and send measurement)
  */
-class SubControl {
+class SubControl : public MessageInterpreterListener {
 public:
     /**
      * @brief Construct a new SubControl object
@@ -60,58 +61,29 @@ public:
     void deactivate();
 
     /**
-     * @name receivedINST Functions
-     * @{
+     * @see MessageInterpreterListener
      */
+    void receivedINST( InstPacket_t& inst_p ) override;
 
     /**
-     * @fn void receivedINST( InstPacket_t& inst_p )
-     * @brief Notify of received Instruction
-     *
-     * @param inst_p Instruction Packet with type and data
+     * @see MessageInterpreterListener
      */
-    void receivedINST( InstPacket_t& inst_p );
+    void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data ) override;
 
     /**
-     * @overload
-     *
-     * @param inst_type Type of instruction
-     * @param data Data associated with instruction arguments
+     * @see MessageInterpreterListener
      */
-    void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data );
+    void receivedINST( inst_t inst_type ) override;
 
     /**
-     * @overload
-     * @brief Single Byte instruction variant
-     *
-     * @param inst_type Type of instruction
+     * @see MessageInterpreterListener
      */
-    void receivedINST( inst_t inst_type );
-
-    /** @} */
-
+    void receivedUPDATE( UpdatePacket_t& update_p ) override;
+    
     /**
-     * @name receivedUPDATE Functions
-     * @{
+     * @see MessageInterpreterListener
      */
-
-    /**
-     * @fn void receivedUPDATE( UpdatePacket_t& update_p )
-     * @brief Notify of received Update
-     *
-     * @param update_p Update Packet with type and data
-     */
-    void receivedUPDATE( UpdatePacket_t& update_p );
-
-    /**
-     * @overload
-     *
-     * @param data_type Data field to update
-     * @param data Data associated with update arguments
-     */
-    void receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data );
-
-    /** @} */
+    void receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data ) override;
 
 private:
     asn::TravelControl& _travel_control;

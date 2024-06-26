@@ -6,13 +6,15 @@
 #include <queue.h>
 #include <semphr.h>
 
+#include <array>
 #include <cstdint>
 
 #include "packet_enums.hpp"
+#include "message_interpreter_listener.hpp"
 
 namespace sen {
 
-#define DATA_ARRAY_SIZE 10
+#define DATA_ARRAY_SIZE 3
 
 class MessageInterpreter {
 public:
@@ -25,6 +27,8 @@ public:
     void byteReceived( uint8_t msg );
     void messageDone();
 
+    void setListener( MessageInterpreterListener *set_listener );
+
 private:
     enum state_t { IDLE, READ, MESSAGE };
     state_t _state = IDLE;
@@ -33,7 +37,7 @@ private:
     QueueHandle_t _message_done_queue;
     xTaskHandle _this_task_handle;
 
-    uint8_t data_array[DATA_ARRAY_SIZE] = { 0 };
+    std::array<uint8_t, DATA_ARRAY_SIZE> data_array;
 
     uint8_t bytes_amount = 0;
 
@@ -43,6 +47,8 @@ private:
     sen::data_t data_type = data_t::NONE;
 
     uint8_t useless_byte;
+
+    MessageInterpreterListener *listener;
 
     void readDataPackets( uint8_t &bytes_amount );
 
