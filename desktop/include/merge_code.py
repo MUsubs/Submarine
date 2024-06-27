@@ -2,28 +2,16 @@ import os
 import json
 import numpy as np
 import cv2
-import tensorflow as tf
-import scipy
-from skimage import transform
-from tensorflow.keras.applications import VGG16
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.layers import Flatten, Dense, Dropout
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.callbacks import ReduceLROnPlateau
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
-from tensorflow.keras import layers, models
+import sqlite3
+from tensorflow.keras.models import load_model
 
 class Tracking:
     def __init__(self, com_port_1, com_port_2, image_dir, json_path, scaler=256):
         """
         Initialize the Tracking class with paths to the image directory and JSON file.
         """
-        #get_frames
         self.com_port_1 = com_port_1
         self.com_port_2 = com_port_2
-
         self.image_dir = image_dir
         self.json_path = json_path
         self.scaler = scaler
@@ -36,9 +24,11 @@ class Tracking:
     def get_frames(self):
         cap1 = cv2.VideoCapture(self.com_port_1)
         cap2 = cv2.VideoCapture(self.com_port_2)
+
         while cap1.isOpened() and cap2.isOpened():
             ret1, frame1 = cap1.read()
             ret2, frame2 = cap2.read()
+
             frame1 = cv2.resize(frame1, (540, 380), fx = 0, fy = 0, interpolation = cv2.INTER_CUBIC)
             frame2 = cv2.resize(frame2, (540, 380), fx = 0, fy = 0, interpolation = cv2.INTER_CUBIC)
             sets1, sets2 = self.predict_bounding_box(frame1, frame2)
@@ -46,22 +36,42 @@ class Tracking:
             x,y = self.convert_data_to_x_y(sets1[0],sets1[1],sets1[2],sets1[3], frame1)
             z = self.convert_data_to_z(sets2[0], sets2[1], sets2[2], sets2[3], frame2)
             coords = [x,y,z]
-            with open("cords.txt", "w") as bestand:
-                bestand.write(f"{coords[0]}, {coords[1]}, {coords[2]} \n")
-            # print("X:", self.x, "Y:", y, "Z:", z)
-            cap1.release() 
-            cap2.release() 
+            print(x,y,z)
+            
+            db_path = r"R2D2\Autonome-Navigatie\desktop\include\flaskr.sqlite"
+            
+            if not os.path.isfile(db_path):
+                print(f"Database file '{db_path}' not found.")
+            else:
+                try:
+                    conn = sqlite3.connect(db_path)
+                    cursor = conn.cursor()
+
+                    cursor.execute("""
+                    INSERT INTO current_locations (x, y, z)
+                    VALUES (?, ?, ?)
+                    """, (coords[0], coords[1], coords[2]))
+                    conn.commit()
+                    print("Data successfully inserted into the 'current_locations' table.")
+                except sqlite3.Error as e:
+                    print(f"An error occurred: {e}")
+                finally:
+                    if conn:
+                        conn.close()
+            cap1.release()
+            cap2.release()
         return frame1, frame2  
     
-    # Functie om waarden uit een bestand te lezen
+    def draw_points_on_image(self, frame, points, colors):
+        for point, color in zip(points, colors):
+            cv2.circle(frame, point, 1, color, -1)  # 10 is the radius, -1 fills the circle
+
     def lees_waarden(self):
         cords = []
-
         with open("cords.txt", 'r') as bestand:
             for regel in bestand:
                 cords.append([float(waarde.strip()) for waarde in regel.split(',')])
         return cords
-
 
     def predict_bounding_box(self, frame1, frame2):
         self.model = load_model("model.h5")
@@ -90,7 +100,6 @@ class Tracking:
         #print("Saved model to disk")
         #####
         self.model = load_model("path to model")
-
 
     def convert_data_to_x_y(self,x,y,w,h,frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -128,11 +137,10 @@ class Tracking:
                 yellow_x, yellow_y = 0,0
         else:
             yellow_x, yellow_y = 0,0     
-
         bx = int (x + (w/2))
         by = int (y + (h/2))
-        bx = (bx - red_x)/(yellow_x-red_x)
-        by = (by - red_y)/(yellow_y-red_y)
+        bx = (bx - red_x) / (yellow_x - red_x)
+        by = (by - red_y) / (yellow_y - red_y)
         rounded_x = round(bx,3)
         rounded_y = round(by,3)
         return rounded_x,rounded_y
@@ -172,7 +180,8 @@ class Tracking:
             else:
                 yellow_x, yellow_y = 0,0
         else:
-            yellow_x, yellow_y = 0,0     
+            yellow_x, yellow_y = 0,0    
+
 
         bx = int (x + (w/2))
         bx = (bx - red_x)/(yellow_x-red_x)
@@ -183,6 +192,7 @@ class Tracking:
         x,y = self.convert_data_to_x_y(x1,y1,w1,h1,frame1)
         z = self.convert_data_to_z(x2,y2,w2,h2,frame2)
         return x,y,z
+
     
     def main():
         com_port_cam_1 = 0
@@ -192,9 +202,12 @@ class Tracking:
         scaler = 256
         object = Tracking(com_port_cam_1, com_port_cam_2, image_dir, json_path)
         object.get_frames()
+        # frame = "R2D2\Coordinaat-bepaling\images\Geel_3.jpg"
+        # frame = cv2.resize(frame, (540, 380), fx = 0, fy = 0, interpolation = cv2.INTER_CUBIC)
+        # object.convert_data_to_x_y(frame)
 
         # Gebruik de functie
-        print(object.lees_waarden())
+        # print(object.lees_waarden())
 
         # sets1, sets2 = object.predict_bounding_box(frame1, frame2)
         # print(sets1)

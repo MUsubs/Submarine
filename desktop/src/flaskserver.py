@@ -4,13 +4,36 @@ import time
 import sys
 import os
 import json
+import sqlite3
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'include'))
 from SerialControl import SerialControl
 from db import get_db, close_db, init_db, init_db_command, init_app
 COM_PORT = 9
-# PLACEHOLDER FUNCTION
+
 def read_current_location():
-    return 0.1, 0.2, 0.3
+    db_path = r"R2D2\Autonome-Navigatie\desktop\include\flaskr.sqlite"
+    if not os.path.isfile(db_path):
+            print(f"Database file '{db_path}' not found.")
+            return None,None,None
+    try: 
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM current_locations ORDER BY id DESC LIMIT 1")
+            row = cursor.fetchone()
+            if row:
+                id,x,y,z = row
+                return x,y,z
+            else:
+                print("No data found")
+                return None,None,None
+
+    except sqlite3.Error as e:
+            print(f"An error occurred: {e}")
+            return None,None,None
+    finally:
+            if conn:
+                conn.close()
+
 
 def create_app(clear_database=True):
     app = Flask(__name__)
@@ -35,7 +58,6 @@ class Server:
         self.current_target_x = 0.2
         self.current_target_y = 0.2
         self.current_target_z = 0.3
-
 
     def configure_routes(self):
         @self.app.route('/')
@@ -77,10 +99,11 @@ class Server:
                     except db.IntegrityError:
                         error = f"Coordinates {coord[0], coord[1], coord[2]} error"
                     x, y, z = read_current_location()
+                    print(f"Current location: {x} {y} {z}")
                     # Comment this back in to set the target coordinates to the given coordinates
-                    # self.current_target_x = coord[0]
-                    # self.current_target_y = coord[1]
-                    # self.current_target_z = coord[2]
+                    self.current_target_x = coord[0]
+                    self.current_target_y = coord[1]
+                    self.current_target_z = coord[2]
                     
                     # Send primary location update
                     self.server_serial.send_serial(f"UPDATE,CURR,X={x},Y={y},Z={z}", COM_PORT)
@@ -111,6 +134,7 @@ class Server:
         def send_current_location():
             print("Sending current location")
             x, y, z = read_current_location()
+            print(f"Current location: {x} {y} {z}")
             serial_response = 0
             serial_message_regular = f"UPDATE,CURR,X={x},Y={y},Z={z}"
             serial_message_arrived = f"INST,ARRIVED"
@@ -127,6 +151,7 @@ class Server:
                 # Wait until the submarine has arrived at the target location
                 while(True):
                     x, y, z = read_current_location()
+                    print(f"Current location: {x} {y} {z}")
                     self.server_serial.send_serial(serial_message_regular, COM_PORT)
                     if ARRIVED():
                         serial_response, _ = self.server_serial.send_serial(serial_message_arrived, COM_PORT, send_and_read=True)

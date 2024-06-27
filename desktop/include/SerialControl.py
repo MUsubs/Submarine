@@ -23,7 +23,7 @@ class SerialControl:
             self.ser.open()
         except Exception as e:
             print(f"COM{com_port} not available. Try again or use another port.")
-            return -1
+            return -1, -1
         
         charList = []
         string = string.upper()
@@ -65,7 +65,7 @@ class SerialControl:
             self.ser.open()
         else:
             print(f"COM{com_port} not available. Try again or use another port.")
-            return -1
+            return -1, -1
         while self.ser.in_waiting <= 0:
                 pass
         if self.ser.in_waiting > 0:
