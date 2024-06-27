@@ -12,13 +12,11 @@ MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
 }
 
 void MessageInterpreter::activate() {
-    // R2D2_DEBUG_LOG( "Activating MessageInterpreter instance" );
     vTaskResume( _this_task_handle );
     _state = state_t::READ;
 }
 
 void MessageInterpreter::deactivate() {
-    // R2D2_DEBUG_LOG( "Deactivating MessageInterpreter instance" );
     vTaskSuspend( _this_task_handle );
     _state = state_t::IDLE;
 }
@@ -42,7 +40,6 @@ void MessageInterpreter::interpretHeader(
     uint8_t header = 0;
 
     if ( !xQueueReceive( _packets_queue, &header, 0 ) ) {
-        // error handling?
         return;
     }
 
@@ -58,9 +55,6 @@ void MessageInterpreter::interpretHeader(
 
         readDataPackets( bytes_amount );
 
-        // send data to subController
-        // subController.receivedSensorData(sensor_id, data_array)
-
     } else if ( type == sen::packet_t::INST ) {
         // Extract and assign the instruction
         instruction = static_cast<sen::inst_t>( ( header & 0b00111000 ) >> 3 );
@@ -72,8 +66,6 @@ void MessageInterpreter::interpretHeader(
             readDataPackets( bytes_amount );
         }
 
-        // controlSub.receivedINST(instruction, data_array);
-
     } else if ( type == sen::packet_t::UPDATE ) {
         // Extract and assign the instruction
         data_type = static_cast<sen::data_t>( ( header & 0b00111000 ) >> 3 );
@@ -82,8 +74,6 @@ void MessageInterpreter::interpretHeader(
         bytes_amount = header & 0b00000111;
 
         readDataPackets( bytes_amount );
-
-        // controlSub.receivedUPDATE(data_type, data_array)
     }
 }
 
@@ -95,7 +85,7 @@ void MessageInterpreter::readDataPackets( uint8_t &bytes_amount ) {
 
     if ( bytes_amount < DATA_ARRAY_SIZE ) {
         for ( unsigned int i = 0; i < bytes_amount; i++ ) {
-            xQueueReceive( _message_done_queue, &byte, 0 );
+            xQueueReceive( _packets_queue, &byte, 0 );
             data_array[i] = byte;
         }
     }
@@ -115,21 +105,17 @@ void MessageInterpreter::run() {
     for ( ;; ) {
         switch ( _state ) {
             case IDLE:
-
-                if ( _message_done_queue != NULL && _packets_queue != NULL ) {
-                    if ( uxQueueMessagesWaiting( _message_done_queue ) >= 1 ) {
-                        xQueueReceive( _message_done_queue, &useless_byte, 0 );
-                        _state = READ;
-                    }
-                }
-                // yield();
-
+                vTaskSuspend( _this_task_handle );
                 break;
 
             case READ:
-
-                _state = MESSAGE;
-
+                if ( _message_done_queue != NULL && _packets_queue != NULL ) {
+                    if ( uxQueueMessagesWaiting( _message_done_queue ) >= 1 ) {
+                        xQueueReceive( _message_done_queue, &useless_byte, 0 );
+                        _state = MESSAGE;
+                        break;
+                    }
+                }
                 break;
 
             case MESSAGE:
@@ -139,12 +125,11 @@ void MessageInterpreter::run() {
                 } else if ( type == packet_t::UPDATE ) {
                     listener->receivedUPDATE( data_type, data_array );
                 } else if ( type == packet_t::SENS ) {
-                    float sens_data = data_array[0] + (data_array[1]*0.01f);
+                    float sens_data = data_array[0] + ( data_array[1] * 0.01f );
                     listener->receivedSENS( sensor_id, sens_data );
                 }
                 clear();
-                _state = IDLE;
-
+                _state = READ;
                 break;
         }
     }

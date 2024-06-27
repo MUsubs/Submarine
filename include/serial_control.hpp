@@ -10,7 +10,6 @@
 
 #include "FreeRTOS.h"
 #include "data_transceiver.hpp"
-#include "packet_enums.hpp"
 #include "task.h"
 
 namespace sen {

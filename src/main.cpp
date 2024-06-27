@@ -28,8 +28,6 @@ void setup() {
     message_passer.activate();
 }
 
-bool b_do = false;
-
 void loop() {
     taskYIELD();
 }

@@ -1,9 +1,8 @@
 #include "serial_control.hpp"
 
-// #define R2D2_DEBUG_ENABLE
-#undef R2D2_DEBUG_ENABLE
-
 #include "r2d2_debug_macros.hpp"
+#include "packet_enums.hpp"
+
 namespace sen {
 
 // PUBLIC
@@ -14,19 +13,16 @@ SerialControl::SerialControl( DataTransceiver& data_sender, int task_priority ) 
 }
 
 void SerialControl::activate() {
-    // // Serial.println( "==INFO== Activating Serial Control instance" );
     vTaskResume( _this_task_handle );
     _state = state_t::READING;
 }
 
 void SerialControl::deactiveate() {
-    // // Serial.println( "==INFO== Deactivating Serial Control instance" );
     vTaskSuspend( _this_task_handle );
     _state = state_t::IDLE;
 }
 
 void SerialControl::clearMeasurements() {
-    // // Serial.println( "==INFO== Clearing measurements buffer" );
     std::queue<float> empty_buffer;
     std::swap( _measure_buffer, empty_buffer );
 }
@@ -82,8 +78,6 @@ void SerialControl::run( void* pvParameters ) {
                 break;
 
             default:
-                // Serial.print( "INVALID STATE" );
-                // Serial.println( _state );
                 break;
         }
     }
@@ -104,7 +98,7 @@ void SerialControl::transmitACK() {
     Serial.printf( "INST,ACK\n" );
 }
 
-// IR Transmission
+// LoRa Transmission
 void SerialControl::sendPacket( const String& packet_string ) {
     bool b_send = false;
     std::vector<uint8_t> bytes_2_send = {};
@@ -116,10 +110,6 @@ void SerialControl::sendPacket( const String& packet_string ) {
         n_data++;
     }
     if ( std::get<1>( command ) == 0 || data_arr.empty() ) {
-        Serial.printf(
-            "==ERROR== invalid command '%s' with length 0 in "
-            "SerialControl::sendPacket() @serial_control.cpp:%d\n",
-            data_arr[0], __LINE__ );
         return;
     }
     String command_type = data_arr[0];
@@ -135,10 +125,10 @@ void SerialControl::sendPacket( const String& packet_string ) {
             if ( instruction_str == "NEW_POS" ) {
                 instruction_type = inst_t::NEW_POS;
             } else {
-                // Serial.printf( "==ERROR== invalid instruction '%s'\n", instruction_str.c_str() );
+                return;
             }
-            bytes_2_send.emplace_back( _data_sender.generateInstructionHeader(
-                instruction_type, std::get<1>( command ) - 2 ) );
+            bytes_2_send.emplace_back(
+                _data_sender.generateInstructionHeader( instruction_type, std::get<1>( command ) - 2 ) );
             b_send = true;
         }
 
@@ -158,14 +148,8 @@ void SerialControl::sendPacket( const String& packet_string ) {
     for ( int i = 2; i < std::get<1>( command ); i++ ) {
         coord = data_arr[i];
         coord = coord.substring( coord.indexOf( '=' ) + 1 );
-        // Serial.printf( "==DEBUG== coord substring = %s\n", coord.c_str() );
         uint8_t mapped_coord = std::min( map( coord.toFloat() * 100, 0, 100, 0, 255 ), (long)255 );
-        // Serial.printf( "==DEBUG== mapped coord = %d\n", mapped_coord );
         bytes_2_send.emplace_back( mapped_coord );
-    }
-    // TODO: BUGFIX, ALWAYS SENDS EVEN ON INVALID INSTRUCTION
-    for ( const uint8_t& b : bytes_2_send ) {
-        R2D2_DEBUG_LOG( "Byte to send: %#02x", b );
     }
     if ( b_send ) _data_sender.sendBytes( bytes_2_send );
 }
@@ -177,11 +161,6 @@ std::tuple<std::array<String, 10>, int> SerialControl::extractCommand( const Str
     for ( int i = 0; i < 10; i++ ) {
         if ( comma_index == -1 ) {
             args[i] = input.substring( from_index );
-            // Serial.println( "Extracted command:" );
-            for ( int j = 0; j < 10; j++ ) {
-                if ( args[j] == "" ) break;
-                // Serial.printf( "%d : %s\n", j, args[j].c_str() );
-            }
             return std::tuple<std::array<String, 10>, int>{ args, i + 1 };
         }
         args[i] = input.substring( from_index, comma_index );
