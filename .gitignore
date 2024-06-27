@@ -15,7 +15,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+!lib/
 lib64/
 parts/
 sdist/
@@ -665,3 +665,14 @@ avr-toolchain-*.zip
 /app/nbproject/private/
 /arduino-core/nbproject/private/
 /app/build/
+/arduino-core/build/
+
+manifest.mf
+nbbuild.xml
+nbproject
+*.ino
+
+# DOXYGEN
+
+html/
+latex/

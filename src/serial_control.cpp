@@ -8,7 +8,7 @@ namespace sen {
 
 // PUBLIC
 
-SerialControl::SerialControl( DataSender& data_sender, int task_priority ) :
+SerialControl::SerialControl( DataTransceiver& data_sender, int task_priority ) :
     _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{}, _state{ state_t::IDLE } {
     xTaskCreate( staticRun, "SERIAL_CONTROL", 4000, this, task_priority, &_this_task_handle );
 }
