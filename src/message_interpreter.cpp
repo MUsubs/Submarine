@@ -12,8 +12,8 @@ MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
 }
 
 void MessageInterpreter::activate() {
-    vTaskResume( _this_task_handle );
     _state = state_t::READ;
+    vTaskResume( _this_task_handle );
 }
 
 void MessageInterpreter::deactivate() {
