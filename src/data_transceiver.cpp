@@ -14,8 +14,8 @@ DataTransceiver::DataTransceiver(
 }
 
 void DataTransceiver::activate() {
-    vTaskResume( _this_task_handle );
     _state = state_t::COMMAND;
+    vTaskResume( _this_task_handle );
 }
 
 void DataTransceiver::deactivate() {

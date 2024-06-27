@@ -18,7 +18,7 @@ public:
      *
      * @param inst_p Instruction Packet with type and data
      */
-    virtual void receivedINST( InstPacket_t& inst_p ) {};
+    virtual void receivedINST( InstPacket_t& inst_p );
 
     /**
      * @overload
@@ -26,7 +26,7 @@ public:
      * @param inst_type Type of instruction
      * @param data Data associated with instruction arguments
      */
-    virtual void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data ) {};
+    virtual void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data );
 
     /**
      * @overload
@@ -34,7 +34,7 @@ public:
      *
      * @param inst_type Type of instruction
      */
-    virtual void receivedINST( inst_t inst_type ) {};
+    virtual void receivedINST( inst_t inst_type );
 
     /** @} */
 
@@ -49,7 +49,7 @@ public:
      *
      * @param update_p Update Packet with type and data
      */
-    virtual void receivedUPDATE( UpdatePacket_t& update_p ) {};
+    virtual void receivedUPDATE( UpdatePacket_t& update_p );
 
     /**
      * @overload
@@ -57,7 +57,7 @@ public:
      * @param data_type Data field to update
      * @param data Data associated with update arguments
      */
-    virtual void receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data ) {};
+    virtual void receivedUPDATE( data_t data_type, std::array<uint8_t, 3>& data );
 
     /** @} */
 
@@ -67,7 +67,7 @@ public:
      * @param sensor Sensor field
      * @param data Data from sensor
      */
-    virtual void receivedSENS( sens_t sensor, float data ) {};
+    virtual void receivedSENS( sens_t sensor, float data );
 };
 
 }  // namespace sen
