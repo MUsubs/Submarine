@@ -12,8 +12,8 @@ MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
 }
 
 void MessageInterpreter::activate() {
-    vTaskResume( _this_task_handle );
     _state = state_t::READ;
+    vTaskResume( _this_task_handle );
 }
 
 void MessageInterpreter::deactivate() {
@@ -40,7 +40,6 @@ void MessageInterpreter::interpretHeader(
     uint8_t header = 0;
 
     if ( !xQueueReceive( _packets_queue, &header, 0 ) ) {
-        // error handling?
         return;
     }
 
@@ -55,9 +54,6 @@ void MessageInterpreter::interpretHeader(
         bytes_amount = header & 0b00001111;
 
         readDataPackets( bytes_amount );
-
-        // send data to subController
-        // subController.receivedSensorData(sensor_id, data_array)
 
     } else if ( type == sen::packet_t::INST ) {
         // Extract and assign the instruction
@@ -78,7 +74,6 @@ void MessageInterpreter::interpretHeader(
         bytes_amount = header & 0b00000111;
 
         readDataPackets( bytes_amount );
-
     }
 }
 
@@ -110,21 +105,17 @@ void MessageInterpreter::run() {
     for ( ;; ) {
         switch ( _state ) {
             case IDLE:
-
-                if ( _message_done_queue != NULL && _packets_queue != NULL ) {
-                    if ( uxQueueMessagesWaiting( _message_done_queue ) >= 1 ) {
-                        xQueueReceive( _message_done_queue, &useless_byte, 0 );
-                        _state = READ;
-                    }
-                }
-                // yield();
-
+                vTaskSuspend( _this_task_handle );
                 break;
 
             case READ:
-
-                _state = MESSAGE;
-
+                if ( _message_done_queue != NULL && _packets_queue != NULL ) {
+                    if ( uxQueueMessagesWaiting( _message_done_queue ) >= 1 ) {
+                        xQueueReceive( _message_done_queue, &useless_byte, 0 );
+                        _state = MESSAGE;
+                        break;
+                    }
+                }
                 break;
 
             case MESSAGE:
@@ -134,12 +125,11 @@ void MessageInterpreter::run() {
                 } else if ( type == packet_t::UPDATE ) {
                     listener->receivedUPDATE( data_type, data_array );
                 } else if ( type == packet_t::SENS ) {
-                    float sens_data = data_array[0] + (data_array[1]*0.01f);
+                    float sens_data = data_array[0] + ( data_array[1] * 0.01f );
                     listener->receivedSENS( sensor_id, sens_data );
                 }
                 clear();
-                _state = IDLE;
-
+                _state = READ;
                 break;
         }
     }
