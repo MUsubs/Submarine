@@ -39,6 +39,17 @@ struct UpdatePacket_t {
     }
 };
 
+struct SensPacket_t {
+    sens_t sens_id;
+    float data;
+
+    SensPacket_t( sens_t sensor_id, float data ) : sens_id( sensor_id ), data( data ) {
+    }
+
+    SensPacket_t() : sens_id{}, data{} {
+    }
+};
+
 }  // namespace sen
 
 #endif  // R2D2_PACKET_ENUMS_HPP
