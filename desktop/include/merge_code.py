@@ -6,24 +6,27 @@ import sqlite3
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
-
+## @class Tracking merge_code.py "desktop/include/merge_code.py"
+#  @brief A class for tracking objects using a camera and a trained model.
+#  @details This class provides methods to capture frames from a camera, predict bounding boxes for objects, and calculate coordinates.
 class Tracking:
+
+    ## @brief Initialize the Tracking class with paths to the image directory and JSON file.
+    #  @param com_port_cam The camera port.
+    #  @param image_dir The directory containing images.
+    #  @param json_path The path to the JSON file containing coordinates data.
+    #  @param scaler The scaling factor for resizing images.
     def __init__(self, com_port_cam, image_dir, json_path, scaler=128):
         """
         Initialize the Tracking class with paths to the image directory and JSON file.
         """
         self.com_port_cam = com_port_cam
-        self.image_dir = image_dir
-        self.json_path = json_path
         self.scaler = scaler
         self.scaler_height = int(scaler * (3 / 4))
-        self.coordinates_data = self.load_json()
         self.model = None
 
-    def load_json(self):
-        with open(self.json_path) as f:
-            return json.load(f)
-
+    ## @brief Capture frames from the camera, predict bounding boxes, and calculate coordinates.
+    #  @return The last frame captured from the camera.
     def get_frames(self):
         cap = cv2.VideoCapture(self.com_port_cam)
 
@@ -59,6 +62,9 @@ class Tracking:
         cap.release()
         return frame
     
+    ## @brief Predict bounding boxes for objects in the given frame using a trained model.
+    #  @param frame The frame to predict bounding boxes on.
+    #  @return The predicted bounding box.
     def predict_bounding_box(self, frame):
 
         # self.model = keras.models.load_model("R2D2\Autonome-Navigatie\Model\modelE.keras")
@@ -74,6 +80,11 @@ class Tracking:
         print(f"Predicted box 1 (normalized): {predicted_box[0]}")
         return predicted_box[0]
 
+    ## @brief Convert bounding box data to x and z coordinates.
+    #  @param mpx The x-coordinate of the bounding box.
+    #  @param mpz The z-coordinate of the bounding box.
+    #  @param frame The frame containing the bounding box.
+    #  @return The converted x and z coordinates.
     def convert_data_to_x_z(self,mpx,mpz,frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         #Red range
@@ -128,6 +139,10 @@ class Tracking:
         
         return rounded_x,rounded_z
     
+    ## @brief Draw points on an image.
+    #  @param frame The frame on which to draw the points.
+    #  @param points The points to draw.
+    #  @param colors The colors of the points.
     def draw_points_on_image(self, frame, points, colors):
         for point, color in zip(points, colors):
             cv2.circle(frame, point, 1, color, -1)  # 10 is the radius, -1 fills the circle
@@ -135,6 +150,7 @@ class Tracking:
         cv2.waitKey(0)  # Wait for a key press
         cv2.destroyAllWindows()
 
+    ## @brief Main method to initialize the Tracking class and capture frames.
     def main():
         com_port_cam = 0
         image_dir = "R2D2/Datasets_making/Frames"
@@ -144,6 +160,3 @@ class Tracking:
 
 if __name__ == "__main__":
     Tracking.main()   
-
-
-
