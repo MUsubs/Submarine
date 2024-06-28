@@ -35,15 +35,35 @@ void loop() {
     header = data_transceiver.generateUpdateHeader(sen::data_t::CURR, 3);
     data = {header, 0, 0, 0};
     data_transceiver.sendBytes(data);
+    Serial.println("Data:");
+    for (auto b : data){
+        Serial.printf("%d\n", b);
+    }
+    Serial.println();
+    vTaskDelay(500);
 
     // new pos 1 0 1
     header = data_transceiver.generateInstructionHeader(sen::inst_t::NEW_POS, 3);
     data = {header, 255, 0, 255};
     data_transceiver.sendBytes(data);
+    Serial.println("Data:");
+    for (auto b : data){
+        Serial.printf("%d\n", b);
+    }
+    Serial.println();
+    vTaskDelay(500);
 
     // update 0.5 0 0
     header = data_transceiver.generateUpdateHeader(sen::data_t::CURR, 3);
     data = {header, 127, 0, 0};
     data_transceiver.sendBytes(data);
+    Serial.println("Data:");
+    for (auto b : data){
+        Serial.printf("%d\n", b);
+    }
+    Serial.println();
+    vTaskDelay(500);
+
+    vTaskDelay(3000);
     taskYIELD();
 }
