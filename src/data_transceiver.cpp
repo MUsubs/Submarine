@@ -63,6 +63,7 @@ void DataTransceiver::run() {
 
             case state_t::COMMAND:
                 _state = state_t::READ;
+                break;
                 // Avoid resource starvation for receiving
                 if ( send_counter >= 2 ) {
                     send_counter = 0;
@@ -96,24 +97,31 @@ void DataTransceiver::staticRun( void* pvParameters ) {
 
 void DataTransceiver::passMessages() {
     int packetSize = LoRa.parsePacket();
-    R2D2_DEBUG_ENABLE("Received packet with %d bytes", packetSize);
     byte recipient = 0;
     if ( packetSize > 0 ) {
         recipient = LoRa.read();
+        R2D2_DEBUG_LOG( "Recipient = %02x", recipient );
+        R2D2_DEBUG_LOG( "Received packet with %d bytes", packetSize );
     } else {
         return;
     }
     // if DataTransceiver instance is in submarine, check if destination is sub_address, else land_address
-    if ( recipient != ( is_sub ? sub_address : land_address ) &&
-         ( recipient == land_address || recipient == sub_address ) ) {
-        // empty LoRa FIFO buffer if message isn't for us
-        for ( int i = 0; i < packetSize; i++ ) {
-            LoRa.read();
+    if ( recipient == land_address || recipient == sub_address ) {
+        if ( recipient == ( is_sub ? sub_address : land_address ) ) {
+        } else {
+            // empty LoRa FIFO buffer if message isn't for us
+            for ( int i = 1; i < packetSize; i++ ) {
+                LoRa.read();
+            }
+            return;
         }
+    } else {
         return;
     }
-    for ( int i = 0; i < packetSize; i++ ) {
-        message_interpreter.byteReceived( LoRa.read() );
+    for ( int i = 1; i < packetSize; i++ ) {
+        byte lora_read = LoRa.read();
+        R2D2_DEBUG_LOG( "DataTransceiver::passMessages() read : %d", (int)lora_read );
+        message_interpreter.byteReceived( lora_read );
     }
     message_interpreter.messageDone();
 }

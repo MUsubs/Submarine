@@ -2,6 +2,9 @@
 
 #include "message_interpreter_listener.hpp"
 
+#define R2D2_DEBUG_ENABLE
+#include "r2d2_debug_macros.hpp"
+
 namespace sen {
 
 MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
@@ -42,9 +45,10 @@ void MessageInterpreter::interpretHeader(
     if ( !xQueueReceive( _packets_queue, &header, 0 ) ) {
         return;
     }
+    // 0b01001011
 
     // Extract and assign the type
-    type = static_cast<sen::packet_t>( ( header & 0b11000000 ) >> 6 );
+    type = (packet_t)( ( header & 0b11000000 ) >> 6 );
 
     if ( type == sen::packet_t::SENS ) {
         // Extract and assign the instruction
@@ -83,7 +87,7 @@ void MessageInterpreter::readDataPackets( uint8_t &bytes_amount ) {
     }
     uint8_t byte = 0;
 
-    if ( bytes_amount < DATA_ARRAY_SIZE ) {
+    if ( bytes_amount <= DATA_ARRAY_SIZE ) {
         for ( unsigned int i = 0; i < bytes_amount; i++ ) {
             xQueueReceive( _packets_queue, &byte, 0 );
             data_array[i] = byte;

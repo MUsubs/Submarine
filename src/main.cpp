@@ -17,7 +17,6 @@ sen::MessagePrinter message_printer{};
 
 void setup() {
     Serial.begin( 115200 );
-    SPI.begin();
 
     while ( !Serial );
     vTaskDelay( 2000 );
