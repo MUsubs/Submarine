@@ -45,28 +45,30 @@ void loop() {
     // vTaskDelay(500);
 
     // new pos 1 0 1
+    int time = 200;
+
     header = data_transceiver.generateInstructionHeader( sen::inst_t::NEW_POS, 3 );
     data = { header, 255, 0, 255 };
     data_transceiver.sendBytes( data );
     R2D2_DEBUG_LOG( "sending NEW_POS 255, 0, 255" );
-    vTaskDelay( 2000 );
+    vTaskDelay( time );
 
     header = data_transceiver.generateInstructionHeader( sen::inst_t::ACK, 0 );
     data = { header };
     data_transceiver.sendBytes( data );
     R2D2_DEBUG_LOG( "sending ACK" );
-    vTaskDelay( 2000 );
+    vTaskDelay( time );
 
     header = data_transceiver.generateUpdateHeader( sen::data_t::CURR, 3 );
     data = { header, 127, 255, 127 };
     data_transceiver.sendBytes( data );
     R2D2_DEBUG_LOG( "sending UPDATE 127, 255, 127" );
-    vTaskDelay( 2000 );
+    vTaskDelay( time );
 
     header = data_transceiver.generateSensorHeader( sen::sens_t::TEMP, 2 );
     data = { header, 30, 50 };
     data_transceiver.sendBytes( data );
     R2D2_DEBUG_LOG( "sending SENS 30.5" );
-    vTaskDelay( 2000 );
+    vTaskDelay( time );
     taskYIELD();
 }
