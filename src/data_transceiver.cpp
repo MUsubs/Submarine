@@ -1,5 +1,8 @@
 #include "data_transceiver.hpp"
 
+#define R2D2_DEBUG_ENABLE
+#include "r2d2_debug_macros.hpp"
+
 namespace sen {
 // public
 DataTransceiver::DataTransceiver(
@@ -8,13 +11,17 @@ DataTransceiver::DataTransceiver(
     nss_pin( nss_pin ), rst_pin( rst_pin ), dio0_pin( dio0_pin ), is_sub( is_sub ),
     _byte_queue( xQueueCreate( 10, sizeof( std::vector<uint8_t>* ) ) ), _this_task_handle(),
     message_interpreter( message_interpreter ) {
-    LoRa.begin( 868E6 );
-    LoRa.setPins( nss_pin, rst_pin, dio0_pin );
     xTaskCreate( staticRun, "DATA_TRANSCEIVER", 3000, (void*)this, task_priority, &_this_task_handle );
 }
 
 void DataTransceiver::activate() {
     _state = state_t::COMMAND;
+    if ( LoRa.begin( 868E6 ) ) {
+        R2D2_DEBUG_LOG( "LoRa succesful!" );
+    } else {
+        R2D2_DEBUG_LOG( "LoRa unsuccesful!" );
+    }
+    LoRa.setPins( nss_pin, rst_pin, dio0_pin );
     vTaskResume( _this_task_handle );
 }
 
@@ -47,6 +54,7 @@ uint8_t DataTransceiver::generateSensorHeader( sens_t sensor, uint8_t n_bytes ) 
 // private
 void DataTransceiver::run() {
     std::vector<uint8_t>* bytes;
+    int send_counter = 0;
     for ( ;; ) {
         switch ( _state ) {
             case state_t::IDLE:
@@ -54,11 +62,17 @@ void DataTransceiver::run() {
                 break;
 
             case state_t::COMMAND:
+                _state = state_t::READ;
+                // Avoid resource starvation for receiving
+                if ( send_counter >= 2 ) {
+                    send_counter = 0;
+                    break;
+                }
                 if ( xQueueReceive( _byte_queue, &bytes, 0 ) ) {
+                    send_counter++;
                     _state = state_t::SEND;
                     break;
                 }
-                _state = state_t::READ;
                 break;
 
             case state_t::SEND:
