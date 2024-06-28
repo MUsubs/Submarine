@@ -63,7 +63,6 @@ void DataTransceiver::run() {
 
             case state_t::COMMAND:
                 _state = state_t::READ;
-                break;
                 // Avoid resource starvation for receiving
                 if ( send_counter >= 2 ) {
                     send_counter = 0;
