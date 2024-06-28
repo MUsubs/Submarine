@@ -13,8 +13,6 @@ class Tracking:
 
     ## @brief Initialize the Tracking class with paths to the image directory and JSON file.
     #  @param com_port_cam The camera port.
-    #  @param image_dir The directory containing images.
-    #  @param json_path The path to the JSON file containing coordinates data.
     #  @param scaler The scaling factor for resizing images.
     def __init__(self, com_port_cam, image_dir, json_path, scaler=128):
         """
