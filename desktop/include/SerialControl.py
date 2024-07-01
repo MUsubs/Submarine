@@ -65,7 +65,7 @@ class SerialControl:
             self.ser.open()
         else:
             print(f"COM{com_port} not available. Try again or use another port.")
-            return -1, -1
+            return -1
         while self.ser.in_waiting <= 0:
                 pass
         if self.ser.in_waiting > 0:
