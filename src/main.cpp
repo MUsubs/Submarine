@@ -49,93 +49,14 @@ void travelControlTask( void* pvParameters ) {
     tc->main();
 }
 
-namespace sen {
-
-std::array<uint8_t, 3> a{ 255, 127, 15 };
-std::array<uint8_t, 3> b{ 1, 2, 3 };
-std::array<uint8_t, 3> c{ 2, 3, 4 };
-std::array<uint8_t, 3> d{ 3, 4, 5 };
-
-void simulateFullCommunication() {
-    Serial.println( "==TEST== simulating full communication" );
-    sub_control.receivedINST( inst_t::NEW_POS, a );
-    // SubControl should do nothing
-    vTaskDelay( 1000 );
-
-    sub_control.receivedUPDATE( data_t::CURR, b );
-    // TravelControl should update
-    vTaskDelay( 1000 );
-    sub_control.receivedINST( inst_t::NEW_POS, a );
-    // SubControl should set new pos and send ACK
-    // TravelControl should set new pos
-    vTaskDelay( 1000 );
-
-    sub_control.receivedUPDATE( data_t::CURR, b );
-    vTaskDelay( 500 );
-    sub_control.receivedUPDATE( data_t::CURR, c );
-    vTaskDelay( 500 );
-    sub_control.receivedUPDATE( data_t::CURR, d );
-    // SubControl should update thrice
-    // Travelcontrol should update thrice
-    vTaskDelay( 1000 );
-
-    sub_control.receivedINST( inst_t::ARRIVED );
-    // SubControl should stop travel and send ACK
-    // TravelControl should stop travel
-    // SubControl should send sensor data
-    vTaskDelay( 1000 );
-
-    // SubControl should wait for ACK
-    sub_control.receivedINST( inst_t::ACK );
-    // SubControl should reset queues and start loop again
-    vTaskDelay( 2000 );
-    Serial.println( "==TEST== full communication test finished" );
-    Serial.println( "=========================================" );
-    Serial.println( "=========================================" );
-}
-
-void simulateStoppedCommunication() {
-    Serial.println( "==TEST== simulating stopped communication" );
-    sub_control.receivedINST( inst_t::STOP );
-    // SubControl should send ACK, reset queues and start loop again
-    vTaskDelay( 1000 );
-
-    sub_control.receivedUPDATE( data_t::CURR, b );
-    vTaskDelay( 500 );
-    sub_control.receivedINST( inst_t::NEW_POS, a );
-    sub_control.receivedINST( inst_t::STOP );
-    // SubControl should stop travel, send ACK, reset queues and start loop again
-    // TravelControl should stop travel
-    vTaskDelay( 1000 );
-
-    sub_control.receivedUPDATE( data_t::CURR, b );
-    vTaskDelay( 500 );
-    sub_control.receivedINST( inst_t::NEW_POS, a );
-    vTaskDelay( 2000 );
-    sub_control.receivedINST( inst_t::ARRIVED );
-    vTaskDelay( 2000 );
-    sub_control.receivedINST( inst_t::STOP );
-    // SubControl should send ACK, reset queues and start loop again
-
-    vTaskDelay( 2000 );
-    Serial.println( "==TEST== stopped communication test finished" );
-    Serial.println( "============================================" );
-    Serial.println( "============================================" );
-}
-}  // namespace sen
-
 void setup() {
     Serial.begin( 115200 );
-
-    while ( !Serial );
-    vTaskDelay( 2000 );
 
     Wire.begin();
     steer_control.setUpSteerControl();
 
     vTaskDelay( 5000 );
 
-    Serial.println( "Creating tasks..." );
     auto return_motor = xTaskCreate(
         motorControlTask, "MotorControl task", 2048, (void*)&motor_control, 1, &motor_control_task_handle );
     auto return_steer = xTaskCreate(
@@ -146,11 +67,6 @@ void setup() {
 
     sub_control.activate();
     message_interpreter.setListener( &sub_control );
-
-    vTaskDelay( 1000 );
-    sen::simulateFullCommunication();
-    vTaskDelay( 10000 );
-    sen::simulateStoppedCommunication();
 }
 
 void loop() {
