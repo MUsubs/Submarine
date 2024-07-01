@@ -1,0 +1,18 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index Page</title>
+</head>
+<body>
+    <h1>Welcome to the Main Page</h1>
+    <form action="/coordinates" method="post">
+        <label for="num_values">How many values?</label>
+        <input type="number" id="num_values" name="num_values" min="1" required>
+        <input type="submit" value="Submit">
+    </form>
+    <br>
+    <button onclick="location.href='/temperatures'">View Temperatures</button>
+</body>
+</html>

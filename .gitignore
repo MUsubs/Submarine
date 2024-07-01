@@ -574,12 +574,11 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
-.vscode
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
 *.code-workspace
 .clang-format
 
@@ -598,3 +597,7 @@ FodyWeavers.xsd
 
 # PLATFORMIO GITIGNORE TEMPLATE
 .pio
+
+data/
+dataset_comb/
+dataset_new/
