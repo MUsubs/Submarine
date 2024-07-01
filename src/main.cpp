@@ -33,17 +33,6 @@ std::vector<uint8_t> data;
 uint8_t header;
 
 void loop() {
-    // // update 0 0 0
-    // header = data_transceiver.generateUpdateHeader(sen::data_t::CURR, 3);
-    // data = {header, 0, 0, 0};
-    // data_transceiver.sendBytes(data);
-    // Serial.println("Data:");
-    // for (auto b : data){
-    //     Serial.printf("%d\n", b);
-    // }
-    // Serial.println();
-    // vTaskDelay(500);
-
     // new pos 1 0 1
     int time = 200;
 
