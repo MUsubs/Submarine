@@ -1,6 +1,9 @@
 #ifndef R2D2_DEBUG_MACROS_HPP
 #define R2D2_DEBUG_MACROS_HPP
 
+// disable logging in all files
+#undef R2D2_DEBUG_ENABLE
+
 #ifdef R2D2_DEBUG_ENABLE
 #define R2D2_DEBUG_LOG( format, ... ) Serial.printf( "==DEBUG== " format "\n", ##__VA_ARGS__ )
 #else

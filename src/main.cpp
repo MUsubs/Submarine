@@ -8,9 +8,6 @@
 #include "message_passer.hpp"
 #include "packet_enums.hpp"
 
-#define R2D2_DEBUG_ENABLE
-#include "r2d2_debug_macros.hpp"
-
 bool is_sub = false;
 
 sen::MessageInterpreter message_interpreter{ 20, 1 };
@@ -21,9 +18,6 @@ sen::MessagePasser message_passer{ serial_control, 1 };
 void setup() {
     Serial.begin( 115200 );
 
-    while ( !Serial );
-    vTaskDelay( 2000 );
-
     message_interpreter.setListener( &message_passer );
 
     message_interpreter.activate();
@@ -31,9 +25,6 @@ void setup() {
     serial_control.activate();
     message_passer.activate();
 }
-
-std::vector<uint8_t> data;
-uint8_t header;
 
 void loop() {
     taskYIELD();
