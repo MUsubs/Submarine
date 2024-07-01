@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow.keras import layers, models
-import tensorflow as tf
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 class Tracking:
     def __init__(self, image_dir, json_path, scaler=64):
@@ -14,7 +14,6 @@ class Tracking:
         self.scaler = scaler
         self.scaler_height = int(scaler * (3/4))
         self.coordinates_data = self.load_json()
-        self
         self.model = None
         
     def load_json(self):
@@ -71,7 +70,6 @@ class Tracking:
         images = images / 255.0
         return train_test_split(images, boxes, test_size=0.2, random_state=42)
 
-
     def build_model(self):
         self.model = models.Sequential([
             layers.Conv2D(16, (3, 3), activation='relu', input_shape=(self.scaler_height, self.scaler, 3)),
@@ -84,23 +82,6 @@ class Tracking:
             layers.Dense(128),
             layers.Dense(4)
         ])
-
-        # filter_size = 3
-        # pool_size = 2
-
-        # self.model = models.Sequential([
-        #     layers.Conv2D(16, (filter_size, filter_size), activation='relu', input_shape=(self.scaler_height, self.scaler, 3)),
-        #     layers.BatchNormalization(),
-        #     layers.MaxPooling2D((pool_size, pool_size)),
-        #     layers.Conv2D(64, (filter_size, filter_size), activation='relu'),
-        #     layers.BatchNormalization(),
-        #     layers.MaxPooling2D((pool_size, pool_size)),
-        #     layers.Flatten(),
-        #     layers.Dense(128, activation='relu'),
-        #     layers.Dropout(0.5),
-        #     layers.Dense(128, activation='relu'),
-        #     layers.Dense(4)
-        # ])
 
         self.model.compile(optimizer='adam',
                            loss='mean_squared_error',
@@ -123,37 +104,21 @@ class Tracking:
         x, y, w, h = predicted_box[0]
         rescaled_predict_box = self.rescale_bbox(x, y, w, h, original_dims=(640, 480))
         print(f"Rescaled predicted box (normalized): {rescaled_predict_box}")
-        print(f"Predicted box: {predicted_box[0]}")
         
         return predicted_box[0]
-
-    def calculate_center(self, box):
-        """ Calculate the center (x_center, y_center) of a bounding box given as [x, y, w, h]. """
-        x, y, w, h = box
-        x_center = x + w / 2
-        y_center = y + h / 2
-        return np.array([x_center, y_center])
-
-    def evaluate_model(self, images_val, boxes_val):
-        """ Evaluate the model by predicting the boxes and comparing with true boxes. """
-        predicted_boxes = self.model.predict(images_val)
-        # predicted_boxes1 = self.predict_bounding_box(images_val)
-        centers_pred = np.array([self.calculate_center(box) for box in predicted_boxes])
-        centers_true = np.array([self.calculate_center(box) for box in boxes_val])
-
-        print("predicted_boxes: ", predicted_boxes)
-        # print("predicted_boxes1: ", predicted_boxes1)
-
-        differences = np.linalg.norm(centers_true - centers_pred, axis=1)
-        average_difference = np.mean(differences)
-        
-        print(f"Average difference in distance between real center and predicted center: {average_difference}")
-        return average_difference
+    
+    def visualize_bounding_box(self, img, box):
+        fig, ax = plt.subplots(1)
+        ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        # Draw rectangle (predicted box)
+        rect = patches.Rectangle((box[0], box[1]), box[2], box[3], linewidth=1, edgecolor='r', facecolor='none')
+        ax.add_patch(rect)
+        plt.show()
     
 if __name__ == "__main__":
     json_path = 'data2/val/combined.json'
     scaler = 64
-    epochs = 300
+    epochs = 50
     image_dir = 'data2/BA'
     tracking = Tracking(image_dir, json_path, scaler)
     
@@ -165,11 +130,18 @@ if __name__ == "__main__":
     tracking.train_model(images_train, images_val, boxes_train, boxes_val)
 
     # Load a single image to test prediction
-    test_image_path = os.path.join(image_dir, 'frame283(BA_4).jpg')  # Replace 'example.jpg' with an actual image file
+    test_image_path = os.path.join(image_dir, 'frame283(BA_4).jpg')  # Modify the filename to an actual image file
     test_image = cv2.imread(test_image_path)
+    
     if test_image is not None:
         predicted_box = tracking.predict_bounding_box(test_image)
+        
+        original_dims = (640, 480)  # Change this to match your specific image dimensions if different
+        rescaled_predict_box = tracking.rescale_bbox(predicted_box[0], predicted_box[1],
+                                                     predicted_box[2], predicted_box[3], original_dims)
+        
+        # Display the original image with the predicted bounding box overlaid
+        tracking.visualize_bounding_box(test_image, rescaled_predict_box)
         print("Predicted bounding box:", predicted_box)
-
-    # Evaluate the model
-    # tracking.evaluate_model(images_val, boxes_val)
+    else:
+        print("Failed to load the image for prediction.")
