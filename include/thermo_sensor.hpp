@@ -30,6 +30,6 @@ private:
     DallasTemperature sensor;
 };
 
-}  // namespace sens
+}  // namespace sen
 
 #endif  // R2D2_THERMO_SENSOR_HPP

@@ -25,8 +25,8 @@ void SubControl::deactivate() {
 
 void SubControl::receivedINST( InstPacket_t& inst_p ) {
     // R2D2_DEBUG_LOG(
-        // "Received Instruction of type %d, with %d arguments", (int)inst_p.inst_type,
-        // inst_p.data_bytes.size() );
+    // "Received Instruction of type %d, with %d arguments", (int)inst_p.inst_type,
+    // inst_p.data_bytes.size() );
     xQueueSend( _inst_queue, (void*)&inst_p, 0 );
 }
 
@@ -45,8 +45,8 @@ void SubControl::receivedINST( inst_t inst_type ) {
 
 void SubControl::receivedUPDATE( UpdatePacket_t& update_p ) {
     // R2D2_DEBUG_LOG(
-        // "Received Update of type %d, with %d arguments", (int)update_p.data_type,
-        // update_p.data_bytes.size() );
+    // "Received Update of type %d, with %d arguments", (int)update_p.data_type,
+    // update_p.data_bytes.size() );
     xQueueSend( _update_queue, (void*)&update_p, 0 );
 }
 
@@ -201,7 +201,7 @@ void SubControl::run() {
                         _state = state_t::INST;
                         break;
                     } else {
-                        if ( received_inst.inst_type ==  inst_t::STOP ) {
+                        if ( received_inst.inst_type == inst_t::STOP ) {
                             R2D2_DEBUG_LOG( "State:%d - SubControl Received a STOP instruction", _state );
                             send_bytes = { _data_sender.generateInstructionHeader( inst_t::ACK, 0 ) };
                             _data_sender.sendBytes( send_bytes );

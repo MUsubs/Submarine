@@ -1,14 +1,13 @@
 #include "motor_control.hpp"
 
-namespace asn
-{
+namespace asn {
 
 MotorControl::MotorControl( uint8_t *pins ) : motor( pins ) {
-    directions_queue = xQueueCreate( 10, sizeof( direction_t));
+    directions_queue = xQueueCreate( 10, sizeof( direction_t ) );
 }
 
 void MotorControl::move( direction_t direction ) {
-    xQueueSend( directions_queue, (void*)&direction, 0 );
+    xQueueSend( directions_queue, (void *)&direction, 0 );
     // Serial.println( "received direction" );
 }
 
@@ -16,7 +15,7 @@ void MotorControl::main() {
     Serial.println( "start motor" );
     direction_t direction;
     for ( ;; ) {
-        if ( xQueueReceive( directions_queue, (void*)&direction, 0) ) {
+        if ( xQueueReceive( directions_queue, (void *)&direction, 0 ) ) {
             switch ( direction ) {
                 case LEFT:
                     // Serial.println( "links" );

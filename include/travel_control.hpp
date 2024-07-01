@@ -1,8 +1,8 @@
 #ifndef R2D2_TRAVELCONTROL_HPP
 #define R2D2_TRAVELCONTROL_HPP
 
-#include <cmath>
 #include <array>
+#include <cmath>
 
 #include "motor_control.hpp"
 #include "steer_control.hpp"
@@ -58,7 +58,7 @@ private:
     xQueueHandle cur_queue;
     bool do_stop;
 
-    enum travel_state_t {START, READ, STOP_TRAVEL, UPDATE_CURRENT, NEW_DESTINATION };
+    enum travel_state_t { START, READ, STOP_TRAVEL, UPDATE_CURRENT, NEW_DESTINATION };
 };
 
 }  // namespace asn

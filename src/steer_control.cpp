@@ -6,7 +6,7 @@
 namespace asn {
 
 SteerControl::SteerControl( Mpu6050 &mpu, MotorControl &motor_control, Kalman &kalman_filter ) :
-    mpu( mpu ), motor_control( motor_control ), kalman_filter( kalman_filter ), stop( true ){
+    mpu( mpu ), motor_control( motor_control ), kalman_filter( kalman_filter ), stop( true ) {
 }
 
 void SteerControl::setSetpoint( float s ) {
@@ -21,7 +21,7 @@ void SteerControl::PID() {
     float gyro_z = mpu.getCurrent_z();
     float current_z = highPassFilter( gyro_z, previous_z );
     kalman();
-    
+
     error = setpoint - current_z;
     error_sum += error * dt;
     error_div = ( error - error_prev ) / dt;
@@ -32,11 +32,11 @@ void SteerControl::PID() {
     previous_z = current_z;
     // Serial.printf( "Steer action: %f\n", steer_action );
 
-    if ( round( mpu.getCurrent_z() +5) < steer_action ) {
+    if ( round( mpu.getCurrent_z() + 5 ) < steer_action ) {
         // Serial.println( "LEFT" );
         motor_control.move( motor_control.direction_t::LEFT );
         vTaskDelay( wait_time );
-    } else if ( round( mpu.getCurrent_z() -5) > steer_action ) {
+    } else if ( round( mpu.getCurrent_z() - 5 ) > steer_action ) {
         // Serial.println( "RIGHT" );
         motor_control.move( motor_control.direction_t::RIGHT );
         vTaskDelay( wait_time );
@@ -72,18 +72,18 @@ void SteerControl::main() {
         if ( !stop ) {
             PID();
         } else {
-            vTaskDelay(2);
+            vTaskDelay( 2 );
         }
     }
 }
 
 void SteerControl::disable() {
-    R2D2_DEBUG_LOG("disable steer");
+    R2D2_DEBUG_LOG( "disable steer" );
     stop = true;
 }
 
 void SteerControl::enable() {
-    R2D2_DEBUG_LOG("enable steer");
+    R2D2_DEBUG_LOG( "enable steer" );
     stop = false;
 }
 

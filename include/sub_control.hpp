@@ -79,7 +79,7 @@ public:
      * @see MessageInterpreterListener
      */
     void receivedUPDATE( UpdatePacket_t& update_p ) override;
-    
+
     /**
      * @see MessageInterpreterListener
      */
