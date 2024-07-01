@@ -22,7 +22,7 @@ class MessagePasser : public MessageInterpreterListener {
 public:
     /**
      * @brief Construct a new Message Passer object
-     * 
+     *
      * @param serial_control Reference to SerialControl instance
      * @param task_priority FreeRTOS task priority
      */

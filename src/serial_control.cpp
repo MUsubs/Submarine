@@ -1,7 +1,7 @@
 #include "serial_control.hpp"
 
-#include "r2d2_debug_macros.hpp"
 #include "packet_enums.hpp"
+#include "r2d2_debug_macros.hpp"
 
 namespace sen {
 
