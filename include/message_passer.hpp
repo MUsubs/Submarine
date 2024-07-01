@@ -10,16 +10,46 @@
 
 namespace sen {
 
+/**
+ * @class MessagePasser message_passer.hpp "include/message_passer.hpp"
+ * @brief Pass Messages from MessageInterpreter to SerialControl
+ * @details
+ * Goals:
+ * 1. Receive Messages from MessageInterpreter (Through interface MessageInterpreterListener)
+ * 2. Call appropriate methods in SerialControl according to received messages
+ */
 class MessagePasser : public MessageInterpreterListener {
 public:
+    /**
+     * @brief Construct a new Message Passer object
+     * 
+     * @param serial_control Reference to SerialControl instance
+     * @param task_priority FreeRTOS task priority
+     */
     MessagePasser( SerialControl& serial_control, int task_priority );
 
+    /**
+     * @brief
+     * Activate SubControl task, put instance into READING state
+     * resuming FreeRTOS task
+     */
     void activate();
 
+    /**
+     * @brief
+     * Deactivate SubControl task, put instance into IDLE state
+     * suspending FreeRTOS task
+     */
     void deactivate();
 
+    /**
+     * @see MessageInterpreterListener
+     */
     void receivedINST( inst_t inst_type, std::array<uint8_t, 3>& data ) override;
 
+    /**
+     * @see MessageInterpreterListener
+     */
     void receivedSENS( sens_t sensor, float data ) override;
 
 private:
