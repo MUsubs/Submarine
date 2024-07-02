@@ -1,15 +1,18 @@
 #include "serial_control.hpp"
 
-#include "r2d2_debug_macros.hpp"
+// #define R2D2_DEBUG_ENABLE
 #include "packet_enums.hpp"
+#include "r2d2_debug_macros.hpp"
 
 namespace sen {
 
 // PUBLIC
 
 SerialControl::SerialControl( DataTransceiver& data_sender, int task_priority ) :
-    _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{}, _state{ state_t::IDLE } {
-    xTaskCreate( staticRun, "SERIAL_CONTROL", 4000, this, task_priority, &_this_task_handle );
+    _data_sender( data_sender ), _measure_buffer{}, _this_task_handle{}, _state{ state_t::IDLE },
+    bytes_2_send{} {
+    xTaskCreate( staticRun, "SERIAL_CONTROL", 6000, this, task_priority, &_this_task_handle );
+    pinMode( LED_BUILTIN, OUTPUT );
 }
 
 void SerialControl::activate() {
@@ -100,8 +103,9 @@ void SerialControl::transmitACK() {
 
 // LoRa Transmission
 void SerialControl::sendPacket( const String& packet_string ) {
+    bytes_2_send.clear();
+    R2D2_DEBUG_LOG( "Sending Packet with String %s", packet_string.c_str() );
     bool b_send = false;
-    std::vector<uint8_t> bytes_2_send = {};
     std::tuple<std::array<String, 10>, int> command = extractCommand( packet_string );
     std::array<String, 10>& data_arr = std::get<0>( command );
     int n_data = 0;
@@ -151,7 +155,12 @@ void SerialControl::sendPacket( const String& packet_string ) {
         uint8_t mapped_coord = std::min( map( coord.toFloat() * 100, 0, 100, 0, 255 ), (long)255 );
         bytes_2_send.emplace_back( mapped_coord );
     }
-    if ( b_send ) _data_sender.sendBytes( bytes_2_send );
+    if ( b_send ) {
+        for ( const auto& i : bytes_2_send ) {
+            R2D2_DEBUG_LOG( "sending byte: %d", i );
+        }
+        _data_sender.sendBytes( bytes_2_send );
+    }
 }
 
 std::tuple<std::array<String, 10>, int> SerialControl::extractCommand( const String& input ) {
@@ -172,12 +181,21 @@ std::tuple<std::array<String, 10>, int> SerialControl::extractCommand( const Str
 }
 
 String SerialControl::readSerialString() {
-    if ( Serial.available() > 0 ) {
-        String result = Serial.readString();
-        result.trim();
-        result.replace( "\b", "" );
-        return result;
+    String result = "";
+    while (Serial.available() > 0){
+        char c = Serial.read();
+        if (c == '\n'){
+            result.trim();
+            return result;
+        }
+        result += c;
     }
+    // if ( Serial.available() > 0 ) {
+    //     String result = Serial.readString();
+    //     result.trim();
+    //     result.replace( "\b", "" );
+    //     return result;
+    // }
     return "";
 }
 

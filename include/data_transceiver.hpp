@@ -27,7 +27,7 @@ public:
     void activate();
     void deactivate();
 
-    void sendBytes( std::vector<uint8_t>& bytes );
+    void sendBytes( std::vector<uint8_t> bytes );
     uint8_t generateInstructionHeader( inst_t inst, uint8_t n_bytes );
     uint8_t generateUpdateHeader( data_t data_id, uint8_t n_bytes );
     uint8_t generateSensorHeader( sens_t sensor, uint8_t n_bytes );
@@ -52,7 +52,7 @@ private:
     void run();
     static void staticRun( void* pvParameters );
     void passMessages();
-    void writeMessage( const std::vector<uint8_t>& bytes );
+    void writeMessage( std::array<uint8_t, 4> bytes );
 };
 }  // namespace sen
 
