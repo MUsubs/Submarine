@@ -82,7 +82,7 @@ class Server:
                 for i in range(num_values):
                     try:
                         x = float(request.form[f'x_{i}'])
-                        y = float(request.form[f'y_{i}'])
+                        y = 0.0 # float(request.form[f'y_{i}'])
                         z = float(request.form[f'z_{i}'])
                         coordinates.append((x, y, z))
                     except ValueError:
