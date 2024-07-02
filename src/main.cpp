@@ -20,8 +20,8 @@ xTaskHandle steer_control_task_handle;
 xTaskHandle travel_control_task_handle;
 xTaskHandle dummy_control_task_handle;
 
-static uint8_t motor_pins[7] = { 22, 21, 20, 19, 18, 12, 13 };
-static uint8_t button_pins[4] = { 16, 17, 26, 27 };
+// EEP, speed x2, depth x2, steer x2
+static uint8_t motor_pins[7] = { 18, 17, 16, 14, 15, 13, 12 };
 Kalman kalman_filter;
 MPU6050 gyro( Wire );
 asn::Mpu6050 mpu( gyro );
@@ -30,8 +30,8 @@ asn::SteerControl steer_control( mpu, motor_control, kalman_filter );
 asn::TravelControl travel_control( motor_control, steer_control );
 
 sen::MessageInterpreter message_interpreter{ 20, 1 };
-sen::DataTransceiver data_transceiver{ 10, 9, 2, true, message_interpreter, 1 };
-sen::ThermoSensor thermo_sensor{ 21 };
+sen::DataTransceiver data_transceiver{ 2, 27, 26, true, message_interpreter, 1 };
+sen::ThermoSensor thermo_sensor{ 10 };
 sen::SubControl sub_control{ travel_control, data_transceiver, thermo_sensor, 1 };
 
 void motorControlTask( void* pvParameters ) {
@@ -131,9 +131,16 @@ void setup() {
     vTaskDelay( 2000 );
 
     Wire.begin();
+
+    Serial.println( "keep boat still" );
     steer_control.setUpSteerControl();
 
-    vTaskDelay( 5000 );
+    delay( 100 );
+    digitalWrite( LED_BUILTIN, HIGH);
+    Serial.println( "bring me to the waaater nowwwww, bring me to the waaater sylvieee." ); 
+    delay( 5000 );
+    digitalWrite( LED_BUILTIN, LOW);
+
 
     Serial.println( "Creating tasks..." );
     auto return_motor = xTaskCreate(

@@ -30,23 +30,25 @@ void SteerControl::PID() {
 
     pos_prev = steer_action;
     previous_z = current_z;
-    // Serial.printf( "Steer action: %f\n", steer_action );
+    Serial.printf( "Measured angle : %f \n", gyro_z);
+    Serial.printf( "Steer action: %f\n", steer_action );
 
-    if ( round( mpu.getCurrent_z() +5) < steer_action ) {
-        // Serial.println( "LEFT" );
+    if ( round( gyro_z +5) < steer_action ) {
+        Serial.println( "LEFT" );
         motor_control.move( motor_control.direction_t::LEFT );
         vTaskDelay( wait_time );
-    } else if ( round( mpu.getCurrent_z() -5) > steer_action ) {
-        // Serial.println( "RIGHT" );
+    } else if ( round( gyro_z -5) > steer_action ) {
+        Serial.println( "RIGHT" );
         motor_control.move( motor_control.direction_t::RIGHT );
         vTaskDelay( wait_time );
     } else {
-        // Serial.println( "FORWARD" );
+        Serial.println( "FORWARD" );
         motor_control.move( motor_control.direction_t::FORWARD );
         vTaskDelay( wait_time );
+        motor_control.move( motor_control.direction_t::STOP );
     }
-    motor_control.move( motor_control.direction_t::STOP );
 }
+
 
 void SteerControl::kalman() {
     current_time = millis();
@@ -80,6 +82,7 @@ void SteerControl::main() {
 void SteerControl::disable() {
     R2D2_DEBUG_LOG("disable steer");
     stop = true;
+    motor_control.move ( motor_control.direction_t::STOP );
 }
 
 void SteerControl::enable() {
