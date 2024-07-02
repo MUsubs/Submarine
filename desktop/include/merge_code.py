@@ -14,7 +14,7 @@ class Tracking:
     ## @brief Initialize the Tracking class with paths to the image directory and JSON file.
     #  @param com_port_cam The camera port.
     #  @param scaler The scaling factor for resizing images.
-    def __init__(self, com_port_cam, image_dir, json_path, scaler=128):
+    def __init__(self, com_port_cam, scaler=64):
         """
         Initialize the Tracking class with paths to the image directory and JSON file.
         """
@@ -33,10 +33,14 @@ class Tracking:
 
             frame = cv2.resize(frame, (540, 380), fx = 0, fy = 0, interpolation = cv2.INTER_CUBIC)
             sets = self.predict_bounding_box(frame)
+            print("sets1:", sets[0])
+            print("sets2:", sets[1])
+            print("sets3:", sets[2])
+            print("sets4:", sets[3])
 
-            x,z = self.convert_data_to_x_z(sets[0],sets[1], frame)
-            coords = [x,z]
-            print(x,z)
+            x,y = self.convert_data_to_x_z(sets[0],sets[1],sets[2],sets[3], frame)
+            coords = [x,y]
+            print(x,y)
             
             db_path = r"R2D2\Autonome-Navigatie\desktop\include\flaskr.sqlite"
             
@@ -46,10 +50,12 @@ class Tracking:
                 try:
                     conn = sqlite3.connect(db_path)
                     cursor = conn.cursor()
+                    # #clear database    
+                    # cursor.execute("DELETE FROM current_locations")
                     cursor.execute("""
                     INSERT INTO current_locations (x, y, z)
                     VALUES (?, ?, ?)
-                    """, (coords[0], 0, coords[1]))
+                    """, (coords[0], coords[1], coords[2]))
                     conn.commit()
                     print("Data successfully inserted into the 'current_locations' table.")
                 except sqlite3.Error as e:
@@ -66,7 +72,7 @@ class Tracking:
     def predict_bounding_box(self, frame):
 
         # self.model = keras.models.load_model("R2D2\Autonome-Navigatie\Model\modelE.keras")
-        self.model = load_model("modelR2.h5")
+        self.model = load_model("modelH1.h5")
         if frame is None or frame.size == 0:
             raise ValueError("Invalid image provided")
             
@@ -83,7 +89,7 @@ class Tracking:
     #  @param mpz The z-coordinate of the bounding box.
     #  @param frame The frame containing the bounding box.
     #  @return The converted x and z coordinates.
-    def convert_data_to_x_z(self,mpx,mpz,frame):
+    def convert_data_to_x_z(self,x,y,w,h,frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         #Red range
         lower_red = np.array([0, 70, 50])
@@ -119,16 +125,26 @@ class Tracking:
                 yellow_x, yellow_y = 0,0
         else:
             yellow_x, yellow_y = 0,0   
-        # points = [(yellow_x,yellow_y)]
-        # colour = [(255,0,0)]
-        # self.draw_points_on_image(frame, points, colour)
-        print("mpx:", mpx)
-        print("mpz:", mpz)
+        # points1 = [(yellow_x,yellow_y)]
+        # colour = [(0,255,0)]
+        # self.draw_points_on_image(frame, points1, colour)
+        # points2 = [(red_x, red_y)]
+        # colour = [(0,255,0)]
+        # self.draw_points_on_image(frame, points2, colour)
         
+
+        points = [(yellow_x,yellow_y)]
+        colour = [(255,0,0)]
+        self.draw_points_on_image(frame, points, colour)
+        print("x:", x)
+        cx = x + w/2
+        cy = y + h/2
+        print("cx:", cx)
+        print("cy:", cy)
         print("Red box:", red_x, red_y)
         print("yellow box", yellow_x, yellow_y)
-        bx = (mpx - red_x) / (yellow_x - red_x)
-        bz = (mpz - red_y) / (yellow_y - red_y)
+        bx = (cx - red_x) / (yellow_x - red_x)
+        bz = (cy - red_y) / (yellow_y - red_y)
         print("bx:", bx)
         print("bz:", bz)
 
@@ -151,10 +167,9 @@ class Tracking:
     ## @brief Main method to initialize the Tracking class and capture frames.
     def main():
         com_port_cam = 0
-        image_dir = "R2D2/Datasets_making/Frames"
-        json_path = "R2D2/Datasets_making/combined.json"
-        object = Tracking(com_port_cam, image_dir, json_path)
+        object = Tracking(com_port_cam)
         object.get_frames()
+
 
 if __name__ == "__main__":
     Tracking.main()   

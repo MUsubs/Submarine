@@ -4,19 +4,21 @@ import cv2
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow.keras import layers, models
-import tensorflow as tf
 import matplotlib.pyplot as plt
-
+import matplotlib.patches as patches
+from tensorflow.keras.models import load_model
+import keras
 class Tracking:
-    def __init__(self, image_dir, json_path, scaler=256):
+    def __init__(self, image_dir, json_path, scaler):
         self.image_dir = image_dir
         self.json_path = json_path
         self.scaler = scaler
+        self.scaler_height = int(scaler * (3/4))
         self.coordinates_data = self.load_json()
         self.model = None
-
+        
     def load_json(self):
-        with open(self.json_path) as f:
+        with open(self.json_path, 'r') as f:
             return json.load(f)
 
     def load_data(self):
@@ -29,9 +31,9 @@ class Tracking:
                 if img is None:
                     print(f"Warning: Could not read image {img_path}")
                     continue
-                img = cv2.resize(img, (self.scaler, self.scaler))
+                img = cv2.resize(img, (self.scaler, self.scaler_height))
                 images.append(img)
-
+                
                 frame_name = filename.replace('.jpg', '.json')
                 if frame_name in self.coordinates_data:
                     box = self.coordinates_data[frame_name]
@@ -40,15 +42,24 @@ class Tracking:
                         y = float(box['y'])
                         w = float(box['w'])
                         h = float(box['h'])
-                        scaled_box = self.scale_bbox(x, y, w, h)
+                        scaled_box = self.scale_bbox(x, y, w, h, (480,640))
                         boxes.append(scaled_box)
                     except KeyError:
                         boxes.append([0.0, 0.0, 0.0, 0.0])
         return np.array(images), np.array(boxes)
 
-    def scale_bbox(self, x, y, w, h):
-        scale_x = self.scaler / 640
-        scale_y = self.scaler / 480
+    def scale_bbox(self, x, y, w, h, original_dims):
+        scale_x = self.scaler / original_dims[0]
+        scale_y = self.scaler_height / original_dims[1]
+        new_x = x * scale_x
+        new_y = y * scale_y
+        new_width = w * scale_x
+        new_height = h * scale_y
+        return [new_x, new_y, new_width, new_height]
+    
+    def rescale_bbox(self, x, y, w, h, original_dims):
+        scale_x = original_dims[0] / self.scaler
+        scale_y = original_dims[1] / self.scaler_height
         new_x = x * scale_x
         new_y = y * scale_y
         new_width = w * scale_x
@@ -61,95 +72,91 @@ class Tracking:
         return train_test_split(images, boxes, test_size=0.2, random_state=42)
 
     def build_model(self):
-        num_filters = 32
-        filter_size = 3
-        pool_size = 2
+        self.model = keras.Sequential()
+        filter_shape = (3,3)
+        self.model.add(layers.Conv2D(16,filter_shape,input_shape = (self.scaler_height, self.scaler,3)))
+        self.model.add(layers.MaxPooling2D((2, 2)))
+        self.model.add(layers.Dropout(.5))
 
-        self.model = models.Sequential([
-            layers.Conv2D(num_filters, (filter_size, filter_size), activation='relu', input_shape=(self.scaler, self.scaler, 3)),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D((pool_size, pool_size)),
-            layers.Conv2D(64, (filter_size, filter_size), activation='relu'),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D((pool_size, pool_size)),
-            layers.Conv2D(128, (filter_size, filter_size), activation='relu'),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D((pool_size, pool_size)),
-            layers.Conv2D(256, (filter_size, filter_size), activation='relu'),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D((pool_size, pool_size)),
-            layers.Flatten(),
-            layers.Dense(128, activation='relu'),
-            layers.Dropout(0.5),
-            layers.Dense(64, activation='relu'),
-            layers.Dense(4)  # 4 outputs for bounding box coordinates (x, y, w, h)
-        ])
+
+        # Second convolutional layer
+        # self.model.add(layers.Conv2D(64, filter_shape, activation='relu'))
+        # self.model.add(layers.MaxPooling2D((2, 2)))
+        # self.model.add(layers.Dropout(.5))
+
+        # # Third convolutional layer
+        self.model.add(layers.Conv2D(32, filter_shape, activation='relu'))
+        self.model.add(layers.MaxPooling2D((2, 2)))
+
+        self.model.add(layers.Flatten())
+        self.model.add(layers.Dense(32))
+        # self.model.add(layers.Dense(128))
+        # self.model.add(layers.Dense(128))
+    
+
+        self.model.add(layers.Dense(4))
 
         self.model.compile(optimizer='adam',
                            loss='mean_squared_error',
                            metrics=['accuracy'])
 
     def train_model(self, images_train, images_val, boxes_train, boxes_val):
-        self.model.fit(images_train, boxes_train, epochs=30, 
+        self.model.fit(images_train, boxes_train, epochs=epochs, 
                        validation_data=(images_val, boxes_val))
+        self.model.save("modelH1.keras")
+        self.model = None
+        self.model = load_model('modelH1.keras')
 
     def predict_bounding_box(self, img):
         if img is None or img.size == 0:
             raise ValueError("Invalid image provided")
             
-        img_resized = cv2.resize(img, (self.scaler, self.scaler))
+        img_resized = cv2.resize(img, (self.scaler, self.scaler_height))
         img_normalized = img_resized / 255.0
         img_expanded = np.expand_dims(img_normalized, axis=0)
 
         predicted_box = self.model.predict(img_expanded)
-        print(f"Predicted box (normalized): {predicted_box[0]}")
-        return predicted_box[0]
+        x, y, w, h = predicted_box[0]
+        rescaled_predict_box = self.rescale_bbox(x, y, w, h, original_dims=(480,640))
+        print(f"Rescaled predicted box (normalized): {rescaled_predict_box}")
         
+        return predicted_box[0]
+    
     def visualize_bounding_box(self, img, box):
-        if img is None or img.size == 0:
-            raise ValueError("Invalid image provided")
-            
-        img_resized = cv2.resize(img, (self.scaler, self.scaler))
-        x, y, w, h = box
-        x = int(x * img_resized.shape[1])
-        y = int(y * img_resized.shape[0])
-        w = int(w * img_resized.shape[1])
-        h = int(h * img_resized.shape[0])
-
-        img_with_box = cv2.rectangle(img_resized.copy(), (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-        plt.imshow(cv2.cvtColor(img_with_box, cv2.COLOR_BGR2RGB))
+        fig, ax = plt.subplots(1)
+        ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        # Draw rectangle (predicted box)
+        rect = patches.Rectangle((box[0], box[1]), box[2], box[3], linewidth=1, edgecolor='r', facecolor='none')
+        ax.add_patch(rect)
         plt.show()
-
-    def print_frame_coordinates_from_json(self, filename):
-        frame_name = filename.replace('.jpg', '.json')
-        print(f"Coordinates for frame {frame_name}:")
-        if frame_name in self.coordinates_data:
-            box = self.coordinates_data[frame_name]
-            x = box.get('x', 'N/A')
-            y = box.get('y', 'N/A')
-            w = box.get('w', 'N/A')
-            h = box.get('h', 'N/A')
-            print(f"x={x}, y={y}, w={w}, h={h}")
-        else:
-            print(f"No coordinates found for frame {frame_name}")
-
+    
 if __name__ == "__main__":
-    json_path = 'data/validatiedata/combined.json'
-    scaler = 256
-
-    image_dir = 'data/traindata'
+    json_path = 'data2/val/combined.json'
+    scaler = 64
+    epochs = 30
+    image_dir = 'data2/BA'
     tracking = Tracking(image_dir, json_path, scaler)
+    
+    # Preprocess data
     images_train, images_val, boxes_train, boxes_val = tracking.preprocess_data()
+    
+    # Build and train the model
     tracking.build_model()
     tracking.train_model(images_train, images_val, boxes_train, boxes_val)
+
+    # Load a single image to test prediction
+    test_image_path = os.path.join(image_dir, 'frame283(BA_4).jpg')  # Modify the filename to an actual image file
+    test_image = cv2.imread(test_image_path)
     
-    example_img_path = os.path.join(image_dir, 'frame_61NOZC.jpg')
-    example_img = cv2.imread(example_img_path)
-    if example_img is not None:
-        predicted_box = tracking.predict_bounding_box(example_img)
-        tracking.visualize_bounding_box(example_img, predicted_box)
-        tracking.print_frame_coordinates_from_json(example_img_path)
+    if test_image is not None:
+        predicted_box = tracking.predict_bounding_box(test_image)
+        
+        original_dims = (480,640)  # Change this to match your specific image dimensions if different
+        rescaled_predict_box = tracking.rescale_bbox(predicted_box[0], predicted_box[1],
+                                                     predicted_box[2], predicted_box[3], original_dims)
+        
+        # Display the original image with the predicted bounding box overlaid
+        tracking.visualize_bounding_box(test_image, rescaled_predict_box)
+        print("Predicted bounding box:", predicted_box)
     else:
-        print(f"Could not read example image at {example_img_path}")
-    
+        print("Failed to load the image for prediction.")

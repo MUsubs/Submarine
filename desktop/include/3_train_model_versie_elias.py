@@ -185,6 +185,7 @@ class Tracking:
             actual_box = self.get_actual_bounding_box(img_path)
             predicted_box = self.predict_bounding_box(example_img)
 
+            
             # Calculate middle points using original bounding box
             mid_act = self.calculate_middle_point(actual_box)
             mid_pred = self.calculate_middle_point(predicted_box)
@@ -196,12 +197,14 @@ class Tracking:
             # Rescale the actual box to the original size
             rescaled_actual_box = self.rescale_bbox(actual_box, original_width, original_height)
             rescaled_mid_act = self.rescale_point(mid_act, original_width, original_height)
-
+            print("Predicted box", predicted_box)
+            print("REscaled pred box", rescaled_predicted_box)
+            print("mid pred: ", mid_pred)
+            print("rescale mid pred", rescaled_mid_pred)
             difference = np.linalg.norm(np.array(rescaled_mid_act) - np.array(rescaled_mid_pred))
  
 
             iou = self.calculate_iou(rescaled_actual_box, rescaled_predicted_box)
-            print("IOU: ", iou)
 
             # Resize image to 640x480 for display
             resized_img = cv2.resize(example_img, (640, 480))
@@ -251,10 +254,10 @@ class Tracking:
 
 
 if __name__ == "__main__":
-    image_dir = "R2D2/data/BA"
-    json_path = "R2D2/data/combined.json"
-    scaler = 128
-    epochs = 750
+    image_dir = "data2/BA"
+    json_path = "data2/val/combined (2).json"
+    scaler = 64
+    epochs = 1
 
     tracking = Tracking(image_dir, json_path, scaler)
     images_train, images_val, boxes_train, boxes_val = tracking.preprocess_data()
@@ -265,5 +268,5 @@ if __name__ == "__main__":
     random_image_paths = random.sample(os.listdir(image_dir), 50)
     random_image_paths = [os.path.join(image_dir, img_path) for img_path in random_image_paths if img_path.endswith('.jpg')]
 
-    # for img_path in random_image_paths:
-    #     tracking.visualize_bounding_boxes(img_path)
+    for img_path in random_image_paths:
+         tracking.visualize_bounding_boxes(img_path)
