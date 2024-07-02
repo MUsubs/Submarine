@@ -6,9 +6,10 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+from tensorflow.keras.models import load_model
+import keras
 class Tracking:
-    def __init__(self, image_dir, json_path, scaler=64):
+    def __init__(self, image_dir, json_path, scaler):
         self.image_dir = image_dir
         self.json_path = json_path
         self.scaler = scaler
@@ -41,7 +42,7 @@ class Tracking:
                         y = float(box['y'])
                         w = float(box['w'])
                         h = float(box['h'])
-                        scaled_box = self.scale_bbox(x, y, w, h, (640, 480))
+                        scaled_box = self.scale_bbox(x, y, w, h, (480,640))
                         boxes.append(scaled_box)
                     except KeyError:
                         boxes.append([0.0, 0.0, 0.0, 0.0])
@@ -71,17 +72,29 @@ class Tracking:
         return train_test_split(images, boxes, test_size=0.2, random_state=42)
 
     def build_model(self):
-        self.model = models.Sequential([
-            layers.Conv2D(16, (3, 3), activation='relu', input_shape=(self.scaler_height, self.scaler, 3)),
-            layers.MaxPooling2D((2, 2)),
-            layers.Conv2D(32, (3, 3), activation='relu'),
-            layers.MaxPooling2D((2, 2)),
-            layers.Dropout(0.5),
-            layers.Flatten(),
-            # Dense layers for localization
-            layers.Dense(128),
-            layers.Dense(4)
-        ])
+        self.model = keras.Sequential()
+        filter_shape = (3,3)
+        self.model.add(layers.Conv2D(16,filter_shape,input_shape = (self.scaler_height, self.scaler,3)))
+        self.model.add(layers.MaxPooling2D((2, 2)))
+        self.model.add(layers.Dropout(.5))
+
+
+        # Second convolutional layer
+        # self.model.add(layers.Conv2D(64, filter_shape, activation='relu'))
+        # self.model.add(layers.MaxPooling2D((2, 2)))
+        # self.model.add(layers.Dropout(.5))
+
+        # # Third convolutional layer
+        self.model.add(layers.Conv2D(32, filter_shape, activation='relu'))
+        self.model.add(layers.MaxPooling2D((2, 2)))
+
+        self.model.add(layers.Flatten())
+        self.model.add(layers.Dense(32))
+        # self.model.add(layers.Dense(128))
+        # self.model.add(layers.Dense(128))
+    
+
+        self.model.add(layers.Dense(4))
 
         self.model.compile(optimizer='adam',
                            loss='mean_squared_error',
@@ -90,7 +103,9 @@ class Tracking:
     def train_model(self, images_train, images_val, boxes_train, boxes_val):
         self.model.fit(images_train, boxes_train, epochs=epochs, 
                        validation_data=(images_val, boxes_val))
-        self.model.save("modelH1.h5")
+        self.model.save("modelH1.keras")
+        self.model = None
+        self.model = load_model('modelH1.keras')
 
     def predict_bounding_box(self, img):
         if img is None or img.size == 0:
@@ -102,7 +117,7 @@ class Tracking:
 
         predicted_box = self.model.predict(img_expanded)
         x, y, w, h = predicted_box[0]
-        rescaled_predict_box = self.rescale_bbox(x, y, w, h, original_dims=(640, 480))
+        rescaled_predict_box = self.rescale_bbox(x, y, w, h, original_dims=(480,640))
         print(f"Rescaled predicted box (normalized): {rescaled_predict_box}")
         
         return predicted_box[0]
@@ -118,7 +133,7 @@ class Tracking:
 if __name__ == "__main__":
     json_path = 'data2/val/combined.json'
     scaler = 64
-    epochs = 50
+    epochs = 30
     image_dir = 'data2/BA'
     tracking = Tracking(image_dir, json_path, scaler)
     
@@ -136,7 +151,7 @@ if __name__ == "__main__":
     if test_image is not None:
         predicted_box = tracking.predict_bounding_box(test_image)
         
-        original_dims = (640, 480)  # Change this to match your specific image dimensions if different
+        original_dims = (480,640)  # Change this to match your specific image dimensions if different
         rescaled_predict_box = tracking.rescale_bbox(predicted_box[0], predicted_box[1],
                                                      predicted_box[2], predicted_box[3], original_dims)
         

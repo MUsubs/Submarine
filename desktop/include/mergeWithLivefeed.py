@@ -1,69 +1,83 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from tensorflow.keras.models import load_model
 
-class LiveFeedTracker:
+class Tracking:
     def __init__(self, model_path, scaler=64, scaler_height=48):
-        # Load the pre-trained model
-        self.model = load_model(model_path)
         self.scaler = scaler
         self.scaler_height = scaler_height
-
+        self.model = load_model(model_path)
+        
+    
     def predict_bounding_box(self, img):
-        # Preprocess the image
+        if img is None or img.size == 0:
+            raise ValueError("Invalid image provided")
+        # img = cv2.resize(img,(640,480))
         img_resized = cv2.resize(img, (self.scaler, self.scaler_height))
         img_normalized = img_resized / 255.0
         img_expanded = np.expand_dims(img_normalized, axis=0)
+        predicted_box = self.model.predict(img_expanded)[0]
+        
+        # Rescale box to original dimensions
+        
+        x, y, w, h = self.rescale_bbox(predicted_box[0], predicted_box[1], predicted_box[2], predicted_box[3])
+        # x, y, w, h = (predicted_box[0], predicted_box[1], predicted_box[2], predicted_box[3])
 
-        # Predict the bounding box using the loaded model
-        predicted_box = self.model.predict(img_expanded)
-        normalized_coordinates = predicted_box[0]
-        x, y, w, h = normalized_coordinates
-        x = x * 10
-        y = y * 10
-        w = w * 10
-        h = h * 10
-        print(f"Predicted box (normalized): {normalized_coordinates}")
+        return [x, y, w, h], img_resized
+    
+    def rescale_bbox(self, x, y, w, h):
+        scale_x = self.original_dims[1] / self.scaler
+        scale_y = self.original_dims[0] / self.scaler_height
+        new_x = x * scale_x
+        new_y = y * scale_y
+        new_width = w * scale_x
+        new_height = h * scale_y
+        print(f'x : {new_x},y:  {new_y}, w: {new_width}, h : {new_height} ')
+        return [new_x, new_y, new_width, new_height]
+    
+    def rescale_bbox2(self, x, y, w, h):
+        scale_x = self.scaler / self.original_dims[1]
+        scale_y = self.scaler_height / self.original_dims[0]
+        new_x = x * scale_x
+        new_y = y * scale_y
+        new_width = w * scale_x
+        new_height = h * scale_y
+        return [new_x, new_y, new_width, new_height]
 
-        # Scale coordinates back to original frame size
-        x, y, w, h = normalized_coordinates
-        x, w = x * 640, w * 640  # Scaling factor for width
-        y, h = y * 480, h * 480  # Scaling factor for height
-        real_coordinates = (int(x), int(y), int(w), int(h))
-        print(f"Predicted box (real coordinates): {real_coordinates}")
-        return real_coordinates
 
-    def run(self):
-        # Start capturing video from the default camera
-        cap = cv2.VideoCapture(0)
+def live_feed(tracking):
+    cap = cv2.VideoCapture(0)
 
-        if not cap.isOpened():
-            print("Error: Cannot open camera")
-            return
 
-        try:
-            while True:
-                # Capture frame-by-frame
-                ret, frame = cap.read()
-                if not ret:
-                    print("Can't receive frame (stream end?). Exiting ...")
-                    break
 
-                # Predict the bounding box for the current frame
-                predicted_box = self.predict_bounding_box(frame)
-                
-                # Display the resulting frame with bounding box
-                x, y, w, h = predicted_box
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.imshow('Frame', frame)
+    while True:
+        ret, frame = cap.read()
+        frame = cv2.resize(frame, (640,480))
+        tracking.original_dims = frame.shape
+        if not ret:
+            print("Failed to capture video")
+            break
+        
+        box, img = tracking.predict_bounding_box(frame)
+        x, y, w, h = box
+        cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 0, 255), 2)
+        # cv2.rectangle(img, (int(x), int(y)), (int(x + w), int(y + h)), (0, 0, 255), 2)
 
-                if cv2.waitKey(1) == ord('q'):
-                    break
-        finally:
-            # When everything done, release the capture
-            cap.release()
-            cv2.destroyAllWindows()
+        print(frame.shape)
+        # print(img.shape)
+        # img = cv2.resize(img, (600,800))
+        # cv2.imshow('Tracking', img)
+        cv2.imshow('Tracking', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    tracker = LiveFeedTracker("modelH1.h5")
-    tracker.run()
+    model_path = 'modelH1.keras'
+    tracking = Tracking(model_path)
+    live_feed(tracking)
