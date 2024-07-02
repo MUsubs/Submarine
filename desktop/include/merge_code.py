@@ -50,6 +50,8 @@ class Tracking:
                 try:
                     conn = sqlite3.connect(db_path)
                     cursor = conn.cursor()
+                    # #clear database    
+                    # cursor.execute("DELETE FROM current_locations")
                     cursor.execute("""
                     INSERT INTO current_locations (x, y, z)
                     VALUES (?, ?, ?)
@@ -123,6 +125,14 @@ class Tracking:
                 yellow_x, yellow_y = 0,0
         else:
             yellow_x, yellow_y = 0,0   
+        # points1 = [(yellow_x,yellow_y)]
+        # colour = [(0,255,0)]
+        # self.draw_points_on_image(frame, points1, colour)
+        # points2 = [(red_x, red_y)]
+        # colour = [(0,255,0)]
+        # self.draw_points_on_image(frame, points2, colour)
+        
+
         points = [(yellow_x,yellow_y)]
         colour = [(255,0,0)]
         self.draw_points_on_image(frame, points, colour)
@@ -159,6 +169,7 @@ class Tracking:
         com_port_cam = 0
         object = Tracking(com_port_cam)
         object.get_frames()
+
 
 if __name__ == "__main__":
     Tracking.main()   
