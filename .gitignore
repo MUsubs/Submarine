@@ -596,6 +596,9 @@ FodyWeavers.xsd
 *.sln.iml
 
 
+
+.pio
+
 data/
 data2/
 dataset_comb/
