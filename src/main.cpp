@@ -7,6 +7,7 @@
 #include "message_interpreter.hpp"
 #include "message_passer.hpp"
 #include "packet_enums.hpp"
+#include "serial_control.hpp"
 
 // #define R2D2_DEBUG_ENABLE
 #include "r2d2_debug_macros.hpp"

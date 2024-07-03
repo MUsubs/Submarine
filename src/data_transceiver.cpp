@@ -124,7 +124,6 @@ void DataTransceiver::writeMessage( std::array<uint8_t, 4> bytes ) {
         R2D2_DEBUG_LOG( "Sending LoRa byte : %d", b );
     }
     LoRa.endPacket();
-    digitalWrite(LED_BUILTIN, LOW);
 }
 
 }  // namespace sen

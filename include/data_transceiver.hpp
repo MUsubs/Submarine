@@ -60,18 +60,12 @@ public:
     void deactivate();
 
     /**
-     * @brief Send bytes over LoRa radio
-     *
-     * @param bytes Bytes to send
-     */
-    void sendBytes( std::vector<uint8_t> bytes );
-
-    /**
      * @brief Add bytes to the byte queue to be sent.
      *
      * @param bytes bytes to send
      */
-    void sendBytes( const std::vector<uint8_t>& bytes );
+    void sendBytes( const std::vector<uint8_t> bytes );
+
     /**
      * @brief Generate an instruction header byte
      *
