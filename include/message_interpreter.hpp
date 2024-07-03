@@ -9,8 +9,8 @@
 #include <array>
 #include <cstdint>
 
-#include "packet_enums.hpp"
 #include "message_interpreter_listener.hpp"
+#include "packet_enums.hpp"
 
 namespace sen {
 

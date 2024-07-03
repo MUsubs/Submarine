@@ -1,10 +1,8 @@
 #include "message_interpreter_listener.hpp"
 
-#include "packet_enums.hpp"
-
-#define R2D2_DEBUG_ENABLE
 #include <String.h>
 
+#include "packet_enums.hpp"
 #include "r2d2_debug_macros.hpp"
 
 namespace sen {

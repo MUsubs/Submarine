@@ -17,13 +17,13 @@ class SerialControl:
 
 
     def send_serial(self, string, com_port, send_and_read=False):
-        self.ser.port = f"COM{com_port}"
+        self.ser.port = com_port
         self.ser.baudrate = 9600
         try:
             self.ser.open()
         except Exception as e:
-            print(f"COM{com_port} not available. Try again or use another port.")
-            return -1
+            print(f"{com_port} not available. Try again or use another port.")
+            return -1, -1
         
         charList = []
         string = string.upper()
