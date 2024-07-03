@@ -1,6 +1,8 @@
 #include "data_transceiver.hpp"
 
+#define R2D2_DEBUG_ENABLE
 #include "r2d2_debug_macros.hpp"
+// #undef R2D2_DEBUG_ENABLE
 #include <array>
 
 namespace sen {
@@ -93,7 +95,7 @@ void DataTransceiver::staticRun( void* pvParameters ) {
 
 void DataTransceiver::passMessages() {
     int packetSize = LoRa.parsePacket();
-    R2D2_DEBUG_LOG( "Received packet with %d bytes", packetSize );
+    // R2D2_DEBUG_LOG( "Received packet with %d bytes", packetSize );
     byte recipient = 0;
     if ( packetSize > 0 ) {
         recipient = LoRa.read();

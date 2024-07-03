@@ -20,6 +20,7 @@ sen::SerialControl serial_control{ data_transceiver, 1 };
 sen::MessagePasser message_passer{ serial_control, 1 };
 
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
     Serial.begin( 115200 );
 
     message_interpreter.setListener( &message_passer );
