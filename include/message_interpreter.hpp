@@ -49,6 +49,8 @@ private:
     uint8_t useless_byte;
 
     MessageInterpreterListener *listener;
+    MessageInterpreterListener *listeners[2];
+    int index = 0;
 
     void readDataPackets( uint8_t &bytes_amount );
 

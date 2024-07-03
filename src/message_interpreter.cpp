@@ -11,7 +11,8 @@ MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
     _packets_queue( xQueueCreate( queue_length, sizeof( uint8_t ) ) ),
     _message_done_queue( xQueueCreate( 10, sizeof( uint8_t ) ) ), _this_task_handle{}, data_array{},
     useless_byte{}, listener{} {
-    xTaskCreate( staticRun, "MESSAGE_INTERPRETER", 6000, (void *)this, task_priority, &_this_task_handle );
+    xTaskCreate(
+        staticRun, "MESSAGE_INTERPRETER", 6000, (void *)this, task_priority, &_this_task_handle );
 }
 
 void MessageInterpreter::activate() {
@@ -34,7 +35,9 @@ void MessageInterpreter::messageDone() {
 }
 
 void MessageInterpreter::setListener( MessageInterpreterListener *set_listener ) {
-    listener = set_listener;
+    if ( index >= 2 ) return;
+    listeners[index] = set_listener;
+    index++;
 }
 
 void MessageInterpreter::interpretHeader(
@@ -125,12 +128,18 @@ void MessageInterpreter::run() {
             case MESSAGE:
                 interpretHeader( type, instruction, sensor_id, data_type, bytes_amount );
                 if ( type == packet_t::INST ) {
-                    listener->receivedINST( instruction, data_array );
+                    for ( int i = 0; i < 2; i++ ) {
+                        listeners[i]->receivedINST( instruction, data_array );
+                    }
                 } else if ( type == packet_t::UPDATE ) {
-                    listener->receivedUPDATE( data_type, data_array );
+                    for ( int i = 0; i < 2; i++ ) {
+                        listeners[i]->receivedUPDATE( data_type, data_array );
+                    }
                 } else if ( type == packet_t::SENS ) {
                     float sens_data = data_array[0] + ( data_array[1] * 0.01f );
-                    listener->receivedSENS( sensor_id, sens_data );
+                    for ( int i = 0; i < 2; i++ ) {
+                        listeners[i]->receivedSENS( sensor_id, sens_data );
+                    }
                 }
                 clear();
                 _state = READ;
@@ -145,7 +154,8 @@ MessageInterpreter::~MessageInterpreter() {
 }
 
 void MessageInterpreter::staticRun( void *pvParameters ) {
-    MessageInterpreter *message_interpreter = reinterpret_cast<MessageInterpreter *>( pvParameters );
+    MessageInterpreter *message_interpreter =
+        reinterpret_cast<MessageInterpreter *>( pvParameters );
     message_interpreter->run();
     vTaskDelete( message_interpreter->_this_task_handle );
 }

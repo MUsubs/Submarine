@@ -3,6 +3,7 @@
 #include <String.h>
 
 #include "packet_enums.hpp"
+#define R2D2_DEBUG_ENABLE
 #include "r2d2_debug_macros.hpp"
 
 namespace sen {

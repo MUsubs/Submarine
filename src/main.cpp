@@ -5,6 +5,7 @@
 
 #include "data_transceiver.hpp"
 #include "message_interpreter.hpp"
+#include "message_interpreter_listener.hpp"
 #include "message_passer.hpp"
 #include "packet_enums.hpp"
 #include "serial_control.hpp"
@@ -18,12 +19,14 @@ sen::MessageInterpreter message_interpreter{ 20, 1 };
 sen::DataTransceiver data_transceiver{ 10, 9, 2, is_sub, message_interpreter, 1 };
 sen::SerialControl serial_control{ data_transceiver, 1 };
 sen::MessagePasser message_passer{ serial_control, 1 };
+sen::MessageInterpreterListener message_printer{};
 
 void setup() {
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode( LED_BUILTIN, OUTPUT );
     Serial.begin( 115200 );
 
     message_interpreter.setListener( &message_passer );
+    message_interpreter.setListener( &message_printer );
 
     message_interpreter.activate();
     data_transceiver.activate();
