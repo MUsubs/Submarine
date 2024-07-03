@@ -23,7 +23,8 @@ public:
      */
     void PID();
     /**
-     * @brief Initializes SteerControl and Kalman variables and starts the setup for the mpu6050.
+     * @brief Initializes SteerControl and Kalman variables and starts the setup
+     * for the mpu6050.
      */
     void setUpSteerControl();
     void main();
