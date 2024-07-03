@@ -23,7 +23,8 @@ public:
      */
     void PID();
     /**
-     * @brief Initializes SteerControl and Kalman variables and starts the setup for the mpu6050.
+     * @brief Initializes SteerControl and Kalman variables and starts the setup
+     * for the mpu6050.
      */
     void setUpSteerControl();
     void main();
@@ -44,6 +45,7 @@ private:
      */
     void kalman();
 
+    bool stop;
     Mpu6050 &mpu;
     MotorControl &motor_control;
     Kalman &kalman_filter;
@@ -64,8 +66,25 @@ private:
     float prev_time = 0;
     const int wait_time = 50;
 
-    bool stop;
+    Mpu6050 &mpu;
+    MotorControl &motor_control;
+    Kalman &kalman_filter;
+    float steer_action;
+    float previous_z = 0.0;
+    float pos_prev = 0.0;
+    double setpoint = 0.0;
+    double error = 0.0;
+    double error_sum = 0.0;
+    double error_prev = 0.0;
+    double error_div = 0.0;
+    const double kp = 0.05;
+    const double ki = 0.0125;
+    const double kd = 0.02;
+    const double dt = 0.1;
+    const float alpha = 0.8;
+    unsigned long current_time = 0;
+    float prev_time = 0;
+    const int wait_time = 50;
 };
-
 }  // namespace asn
 #endif  // R2D2_STEERCONTROL_HPP
