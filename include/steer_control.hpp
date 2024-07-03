@@ -44,6 +44,7 @@ private:
      */
     void kalman();
 
+    bool stop;
     Mpu6050 &mpu;
     MotorControl &motor_control;
     Kalman &kalman_filter;
@@ -55,16 +56,14 @@ private:
     double error_sum = 0.0;
     double error_prev = 0.0;
     double error_div = 0.0;
-    const double kp = 1.0;
-    const double ki = 0.0;
-    const double kd = 0.0;
+    const double kp = 0.05;
+    const double ki = 0.0125;
+    const double kd = 0.02;
     const double dt = 0.1;
     const float alpha = 0.8;
     unsigned long current_time = 0;
     float prev_time = 0;
     const int wait_time = 50;
-
-    bool stop;
 };
 
 }  // namespace asn
