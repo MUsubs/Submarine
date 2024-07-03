@@ -8,6 +8,9 @@
 #include "message_passer.hpp"
 #include "packet_enums.hpp"
 
+// #define R2D2_DEBUG_ENABLE
+#include "r2d2_debug_macros.hpp"
+
 bool is_sub = false;
 
 sen::MessageInterpreter message_interpreter{ 20, 1 };

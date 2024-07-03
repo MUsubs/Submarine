@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import serial
+from serial.tools import list_ports
 import time
 import sys
 import os
@@ -8,10 +9,13 @@ import sqlite3
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'include'))
 from SerialControl import SerialControl
 from db import get_db, close_db, init_db, init_db_command, init_app
-COM_PORT = 9
+import pathlib
+
+COM_PORT = "COM21"
 # PLACEHOLDER FUNCTION
 def read_current_location():
-    db_path = r"R2D2\Autonome-Navigatie\desktop\include\flaskr.sqlite"
+    # db_path = r"R2D2\Autonome-Navigatie\desktop\include\flaskr.sqlite"
+    db_path = os.path.normpath(os.path.join(pathlib.Path.cwd(), r'desktop\include\flaskr.sqlite'))
     if not os.path.isfile(db_path):
             print(f"Database file '{db_path}' not found.")
             return None,None,None
@@ -26,7 +30,6 @@ def read_current_location():
             else:
                 print("No data found")
                 return None,None,None
-
     except sqlite3.Error as e:
             print(f"An error occurred: {e}")
             return None,None,None
@@ -82,7 +85,7 @@ class Server:
                 for i in range(num_values):
                     try:
                         x = float(request.form[f'x_{i}'])
-                        y = float(request.form[f'y_{i}'])
+                        y = 0.0 # float(request.form[f'y_{i}'])
                         z = float(request.form[f'z_{i}'])
                         coordinates.append((x, y, z))
                     except ValueError:
@@ -105,9 +108,9 @@ class Server:
                     # self.current_target_z = coord[2]
                     
                     # Send primary location update
-                    self.server_serial.send_serial(f"UPDATE,CURR,X={x},Y={y},Z={z}", COM_PORT)
+                    self.server_serial.send_serial(f"UPDATE,CURR,X={x},Y={y},Z={z}\n", COM_PORT)
                     # Send new target position
-                    server_response, serial_return = self.server_serial.send_serial(f'INST,NEW_POS,X={coord[0]},Y={coord[1]},Z={coord[2]}', COM_PORT, True)
+                    server_response, serial_return = self.server_serial.send_serial(f'INST,NEW_POS,X={coord[0]},Y={coord[1]},Z={coord[2]}\n', COM_PORT, True)
                     response_command, _, _ = self.server_serial.parse_response(server_response)
                     print(f"Response command: {response_command}")
 

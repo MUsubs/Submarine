@@ -88,6 +88,8 @@ private:
     enum state_t { IDLE, READING, SERIAL_TRANSMIT, DATA_SEND, SERIAL_ACK };
     state_t _state;
 
+    std::vector<uint8_t> bytes_2_send;
+
     /**
      * @brief Main loop of SerialControl for FreeRTOS task.
      *

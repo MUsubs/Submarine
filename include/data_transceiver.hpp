@@ -64,7 +64,7 @@ public:
      *
      * @param bytes Bytes to send
      */
-    void sendBytes( std::vector<uint8_t>& bytes );
+    void sendBytes( std::vector<uint8_t> bytes );
 
     /**
      * @brief Add bytes to the byte queue to be sent.
@@ -120,7 +120,7 @@ private:
     void run();
     static void staticRun( void* pvParameters );
     void passMessages();
-    void writeMessage( const std::vector<uint8_t>& bytes );
+    void writeMessage( std::array<uint8_t, 4> bytes );
 };
 }  // namespace sen
 

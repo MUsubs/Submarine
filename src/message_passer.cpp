@@ -7,7 +7,8 @@ MessagePasser::MessagePasser( SerialControl& serial_control, int task_priority )
     serial_control( serial_control ), _this_task_handle{},
     _inst_queue{ xQueueCreate( 3, sizeof( InstPacket_t ) ) },
     _sens_queue{ xQueueCreate( 3, sizeof( SensPacket_t ) ) } {
-    xTaskCreate( staticRun, "MESSAGE_PASSER", 1000, (void*)this, task_priority, &_this_task_handle );
+    xTaskCreate(
+        staticRun, "MESSAGE_PASSER", 4000, (void*)this, task_priority, &_this_task_handle );
 }
 
 void MessagePasser::activate() {

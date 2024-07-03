@@ -8,7 +8,7 @@ MessageInterpreter::MessageInterpreter( int queue_length, int task_priority ) :
     _packets_queue( xQueueCreate( queue_length, sizeof( uint8_t ) ) ),
     _message_done_queue( xQueueCreate( 10, sizeof( uint8_t ) ) ), _this_task_handle{}, data_array{},
     useless_byte{}, listener{} {
-    xTaskCreate( staticRun, "MESSAGE_INTERPRETER", 4000, (void *)this, task_priority, &_this_task_handle );
+    xTaskCreate( staticRun, "MESSAGE_INTERPRETER", 6000, (void *)this, task_priority, &_this_task_handle );
 }
 
 void MessageInterpreter::activate() {
