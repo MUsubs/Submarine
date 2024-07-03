@@ -9,15 +9,18 @@ The Submarine project is a combination of many components, divided into three ca
 
 # NAV
 Project Source on branch [Land-Main](https://github.com/MUsubs/Submarine/tree/Land-Main) with C++ namespace `nav`
+Original development done in [Autonome-Navigatie](https://github.com/MUsubs/Autonome-Navigatie) repository.
 
 Microcontroller (C++, RP2040 + FreeRTOS) code in [Land-Main Submarine](https://github.com/MUsubs/Submarine/tree/Land-Main) folder, Desktop application (Python, native) code in [Land-Main Submarine/desktop](https://github.com/MUsubs/Submarine/tree/Land-Main/desktop) folder.
 
 # ASN
 Project Source on branch [Sub-Main](https://github.com/MUsubs/Submarine/tree/Sub-Main) with C++ namespace `asn`
+Original development done in [aansturingssysteem](https://github.com/MUsubs/aansturingssysteem) and [aansturingssysteem-2](https://github.com/MUsubs/aansturingssysteem-2) repositories.
 
 Microcontroller (C++, RP2040 + FreeRTOS) code in [Sub-Main Submarine](https://github.com/MUsubs/Submarine/tree/Sub-Main) folder
 
 # SEN
 Project Source on branch [Land-Main](https://github.com/MUsubs/Submarine/tree/Land-Main) and [Sub-Main](https://github.com/MUsubs/Submarine/tree/Sub-Main) with C++ namespace `sen`
+Original development done in [Sensoren](https://github.com/MUsubs/Sensoren) repository.
 
 Microcontroller (C++, RP2040 + FreeRTOS) code in [Land-Main Submarine](https://github.com/MUsubs/Submarine/tree/Land-Main) and [Sub-Main Submarine](https://github.com/MUsubs/Submarine/tree/Sub-Main) folders
