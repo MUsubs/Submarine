@@ -599,7 +599,11 @@ FodyWeavers.xsd
 # PLATFORMIO GITIGNORE TEMPLATE
 .pio
 
+
+.pio
+
 data/
+data2/
 dataset_comb/
 dataset_new/
 # ARDUINO GITIGNORE TEMPLATE
